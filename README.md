@@ -9,18 +9,21 @@ This project is a system that gathers users' data of liked songs and then the pr
 - [Usage](#usage)
 - [Authors](#Authors)
 
-##Features 
+
+## Features 
 - Rating a songs lyrics and melody
 -  Song recommendations based on liked songs and friends playlists
 - Analysis of song preferences and common features of liked songs.
 
+
 ## Installation 
-aa
+1. Clone the repository
+   $ git clone https://github.com/serrayakupoglu/T22.git
 
-##Usage
-After becoming a user of the system 
+## Usage
 
-##Authors
+
+## Authors
 1. Backend group: Yagmur Dolunay, Ata Egemen Gurel
 2. Web group: Ezgi Duman, Berke Kayhan
 3. Mobile app group: Kemal Ayhan, Bahri Baran Coskun
