@@ -17,7 +17,8 @@ This project is a system that gathers users' data of liked songs and then the pr
 
 
 ## Installation 
-
+1. Clone the repository
+   $ git clone https://github.com/serrayakupoglu/T22.git
 
 ## Usage
 
