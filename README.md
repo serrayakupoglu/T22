@@ -10,7 +10,7 @@ This project is a system that gathers users' data of liked songs and then the pr
 - [Authors](#Authors)
 
 
-##Features 
+## Features 
 - Rating a songs lyrics and melody
 -  Song recommendations based on liked songs and friends playlists
 - Analysis of song preferences and common features of liked songs.
@@ -19,10 +19,10 @@ This project is a system that gathers users' data of liked songs and then the pr
 ## Installation 
 
 
-##Usage
+## Usage
 
 
-##Authors
+## Authors
 1. Backend group: Yagmur Dolunay, Ata Egemen Gurel
 2. Web group: Ezgi Duman, Berke Kayhan
 3. Mobile app group: Kemal Ayhan, Bahri Baran Coskun
