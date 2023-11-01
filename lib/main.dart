@@ -16,7 +16,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       theme: ThemeData(
-        primaryColor: Color(0xFF003049), // Custom primary color
+        primaryColor: const Color(0xFF003049), // Custom primary color
         fontFamily: 'Montserrat',        // Custom font
       ),
       home: LoginPage(),

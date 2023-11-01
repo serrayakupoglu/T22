@@ -1,61 +1,69 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:untitled1/src/features/common_widgets/social_login_button.dart';
 
-class FirstPage extends StatefulWidget {
-  @override
-  State<StatefulWidget> createState() => _FirstPageState();
 
-}
+class FirstPage extends StatelessWidget {
+  const FirstPage({super.key});
 
-class _FirstPageState extends State<FirstPage> {
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.lightBlueAccent,
-        body: Center(
+        body: Container(
+          padding: const EdgeInsets.all(16.0),
           child: Column(
+            mainAxisSize: MainAxisSize.max,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                decoration: BoxDecoration(
-                    border: Border.all(color: Colors.white),
-                    borderRadius: BorderRadius.all(Radius.circular(20))
-                ),
+                margin: EdgeInsets.only(bottom: 50),
                 child: const Icon(Icons.music_note, color: Colors.white, size: 64),
               ),
               Container(
-                margin: EdgeInsets.fromLTRB(30, 30, 30, 30),
-                child: TextField(
-                  decoration: InputDecoration(
-                    fillColor: Colors.white,
-                    hintText: 'Email',
-                    hintStyle: TextStyle(fontSize: 16),
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(
-                            width: 0,
-                            style: BorderStyle.none
-                        )
-                    ),
-                    filled: true,
+                margin: const EdgeInsets.only(bottom: 20),
+                child: ElevatedButton(
+                  onPressed: (){},
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30)
+                    )
+                  ),
+                  child: const Text(
+                      "Sign Up",
+                      style: TextStyle(
+                        color: Colors.black54,
+                      ),
                   ),
                 ),
               ),
               Container(
-                margin: EdgeInsets.fromLTRB(30, 0, 30, 30),
-                child: TextField(
-                  decoration: InputDecoration(
-                    fillColor: Colors.white,
-                    hintText: 'Password',
-                    hintStyle: TextStyle(fontSize: 16),
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(
-                            width: 0,
-                            style: BorderStyle.none
-                        )
-                    ),
-                    filled: true,
+                margin: const EdgeInsets.only(bottom: 20),
+                child: const Text(
+                  "already have an account?",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white
                   ),
+                ),
+              ),
+
+              RichText(
+                textAlign: TextAlign.center,
+                selectionColor: Colors.white30,
+                text: TextSpan(
+                  style: const TextStyle(
+                    decoration: TextDecoration.underline,
+                    fontSize: 16
+                  ),
+                  text: "Sign In",
+                  recognizer: TapGestureRecognizer()
+                    ..onTap = () {
+                      debugPrint('The button is clicked!');
+                    },
                 ),
               ),
             ],
