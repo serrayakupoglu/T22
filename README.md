@@ -1,16 +1,30 @@
-# untitled1
+# T22
+Music Data Collection and Analysis System
 
-A new Flutter project.
+This project is a system that gathers users' data of liked songs and then the project offers various different analysis on musical preferances, making recommendations accordingly. 
 
-## Getting Started
+## Table of Content 
+- [Features](#features)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Authors](#Authors)
 
-This project is a starting point for a Flutter application.
+##Features 
+- Rating a songs lyrics and melody
+-  Song recommendations based on liked songs and friends playlists
+- Analysis of song preferences and common features of liked songs.
 
-A few resources to get you started if this is your first Flutter project:
+## Installation 
+aa
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+##Usage
+After becoming a user of the system 
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+##Authors
+1. Backend group: Yagmur Dolunay, Ata Egemen Gurel
+2. Web group: Ezgi Duman, Berke Kayhan
+3. Mobile app group: Kemal Ayhan, Bahri Baran Coskun
+4. Team Leader: Serra Yakupoglu   
+
+
+
