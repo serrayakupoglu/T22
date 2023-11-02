@@ -1,14 +1,14 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:untitled1/src/features/common_widgets/social_login_button.dart';
+import 'package:untitled1/src/features/controller/opening_screen_controller.dart';
 
-
-class FirstPage extends StatelessWidget {
-  const FirstPage({super.key});
+class OpeningPage extends StatelessWidget {
+  const OpeningPage({super.key});
 
 
   @override
   Widget build(BuildContext context) {
+    final OpeningScreenController controller = OpeningScreenController(context);
     return Scaffold(
       backgroundColor: Colors.lightBlueAccent,
         body: Container(
@@ -25,7 +25,7 @@ class FirstPage extends StatelessWidget {
               Container(
                 margin: const EdgeInsets.only(bottom: 20),
                 child: ElevatedButton(
-                  onPressed: (){},
+                  onPressed: controller.navigateToSignUp,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
@@ -61,9 +61,7 @@ class FirstPage extends StatelessWidget {
                   ),
                   text: "Sign In",
                   recognizer: TapGestureRecognizer()
-                    ..onTap = () {
-                      debugPrint('The button is clicked!');
-                    },
+                    ..onTap = controller.navigateToSignIn,
                 ),
               ),
             ],
