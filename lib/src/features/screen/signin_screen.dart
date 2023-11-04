@@ -1,6 +1,8 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
+import '../controller/singin_screen_controller.dart';
+
 class LoginPage extends StatefulWidget {
   @override
   State<StatefulWidget> createState() => _LoginPageState();
@@ -10,6 +12,9 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    SignInScreenController controller = SignInScreenController(context);
+    final TextEditingController emailController = TextEditingController();
+    final TextEditingController passwordController = TextEditingController();
     return Scaffold(
       backgroundColor: Colors.lightBlueAccent,
       resizeToAvoidBottomInset: false,
@@ -31,6 +36,7 @@ class _LoginPageState extends State<LoginPage> {
             Container(
               margin: EdgeInsets.fromLTRB(30, 30, 30, 30),
               child: TextField(
+                controller: emailController,
                 decoration: InputDecoration(
                   fillColor: Colors.white,
                   hintText: 'Email',
@@ -49,6 +55,7 @@ class _LoginPageState extends State<LoginPage> {
             Container(
               margin: EdgeInsets.fromLTRB(30, 0, 30, 30),
               child: TextField(
+                controller: passwordController,
                 decoration: InputDecoration(
                   fillColor: Colors.white,
                   hintText: 'Password',
@@ -68,7 +75,9 @@ class _LoginPageState extends State<LoginPage> {
               decoration: BoxDecoration(
                   color: Colors.white, borderRadius: BorderRadius.circular(20)),
               child: TextButton(
-                onPressed: () {},
+                onPressed: () async {
+                  controller.signIn(emailController.text, passwordController.text);
+                },
                 child: const Text(
                   'Sign In',
                   style: TextStyle(fontSize: 16),
@@ -83,9 +92,7 @@ class _LoginPageState extends State<LoginPage> {
                 text: TextSpan(
                   text: "forgot password",
                   recognizer: TapGestureRecognizer()
-                    ..onTap = () {
-                      debugPrint('The button is clicked!');
-                    },
+                    ..onTap = controller.navigateToForgotPass,
                 ),
             ),
           ],
