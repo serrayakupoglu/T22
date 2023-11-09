@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:untitled1/src/features/screen/opening_screen.dart';
-import 'package:untitled1/src/features/screen/signup_screen.dart';
-import 'src/features/screen/signin_screen.dart';
 
 
 void main() {
@@ -18,8 +16,10 @@ class MyApp extends StatelessWidget {
         primaryColor: const Color(0xFF003049), // Custom primary color
         fontFamily: 'Montserrat',        // Custom font
       ),
-      home: OpeningPage(),
+      home:OpeningPage(),
 
     );
   }
 }
+
+
