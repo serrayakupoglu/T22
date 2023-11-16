@@ -39,7 +39,7 @@ class _LoginPageState extends State<LoginPage> {
                 controller: emailController,
                 decoration: InputDecoration(
                   fillColor: Colors.white,
-                  hintText: 'Email',
+                  hintText: 'User Name',
                   hintStyle: TextStyle(fontSize: 16),
                   border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -56,6 +56,7 @@ class _LoginPageState extends State<LoginPage> {
               margin: EdgeInsets.fromLTRB(30, 0, 30, 30),
               child: TextField(
                 controller: passwordController,
+                obscureText: true,
                 decoration: InputDecoration(
                   fillColor: Colors.white,
                   hintText: 'Password',
