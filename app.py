@@ -3,9 +3,12 @@ from flask import Flask, jsonify, request, session
 import requests
 import json 
 import secrets
+from bson import ObjectId
+import random
+import string
 
 
-app = Flask(__name__)
+app = Flask(_name_)
 app.secret_key = 'ygmr2002'
 
 
@@ -150,9 +153,6 @@ def login():
 
     if username and password:
         # Connect to the database
-        if check(username):
-            return jsonify({'message': username + ' is already logged in'})
-
         client = connect_to_mongo()
         db = client.MusicDB
         UserInfo_collection = db.UserInfo
@@ -162,58 +162,87 @@ def login():
 
         # Check if the user exists and the password is correct
         if user and password == user['userPassword']:
-            # Set the user-specific identifier in the session
-            session['user_identifier'] = generate_session_id()
-
-            # Update the logged_in_users dictionary
-            if username not in logged_in_users:
-                logged_in_users[username] = {'session_ids': []}
-            logged_in_users[username]['session_ids'].append(session['user_identifier'])
-
-            print(f"Logged in users after login: {logged_in_users}")  # Debugging line
-
+            # Set the user in the session with a dynamic key
+            session[username] = True
             return jsonify({'message': 'Login successful'})
         else:
             return jsonify({'message': 'Invalid username or password'}), 401
     else:
         return jsonify({'message': 'Bad Request - Missing credentials'}), 400
 
+
 @app.route('/logout', methods=['POST'])
 def logout():
     # Check if the user is logged in
-    print(f"Session before logout: {session}")  # Debugging line
-    if 'user_identifier' in session:
-        user_identifier = session['user_identifier']
-        print(f"Logged in users before logout: {logged_in_users}")  # Debugging line
-        print(f"User identifier to remove: {user_identifier}")  # Debugging line
-        username = next((user for user, data in logged_in_users.items() if user_identifier in data['session_ids']), None)
-        print(f"Found username for user identifier: {username}")  # Debugging line
-        if username:
-            # Clear the user's session data
-            session.clear()
+    username = request.form['username']
+    if username in session:
+        # Clear the user from the session
+        session.pop(username, None)
+        return jsonify({'message': 'Logout successful'})
+    else:
+        return jsonify({'message': 'User not logged in'}), 401
 
-            # Remove the session identifier from the user's list
-            logged_in_users[username]['session_ids'].remove(user_identifier)
-
-            # If the user has no active sessions, remove them from the dictionary
-            if not logged_in_users[username]['session_ids']:
-                del logged_in_users[username]
-
-            print(f"Session after logout: {session}")  # Debugging line
-            print(f"Logged in users after logout: {logged_in_users}")  # Debugging line
-
-            return jsonify({'message': 'Logout successful'})
-        else:
-            return jsonify({'message': 'User not found in logged_in_users'}), 500
-    return jsonify({'message': 'User not logged in'}), 401
-@app.route('/signup', methods=['POST'])
+'''@app.route('/signup', methods=['POST'])
 def signup():
     username = request.form['username']
     password = request.form['password']
     return 'Signing up %s with password %s' % ((username), (password))
-######################################
+######################################'''
+@app.route('/signup', methods=['GET', 'POST'])
+def signup():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        password2 = request.form['password2']
+        name = request.form['name']
+        surname = request.form['surname']
 
+        if password != password2:
+            return jsonify({'message': 'Passwords do not match'}), 400
 
+        client = connect_to_mongo()
+        db = client.MusicDB
+        UserInfo_collection = db.UserInfo
+
+        # Check if the username already exists
+        existing_user = UserInfo_collection.find_one({'username': username})
+        if existing_user:
+            return jsonify({'message': 'Username already exists'}), 400
+
+        # Generate a random userID
+        user_id = generate_random_user_id()
+
+        # Insert the new user into the database
+        new_user = {
+            'name': name,
+            'surname': surname,
+            'username': username,
+            'userID': user_id,
+            'userPassword': password,
+            'followers': [],
+            'following': [],
+            'likedSongs': []
+            # Add other user-related fields as needed
+        }
+        insert_result = UserInfo_collection.insert_one(new_user)
+
+        # Optionally, you can add the user to the logged_in_users dictionary
+        if username not in logged_in_users:
+            logged_in_users[username] = {'session_ids': []}
+
+        # Set the user-specific identifier in the session
+        session['user_identifier'] = generate_session_id()
+        logged_in_users[username]['session_ids'].append(session['user_identifier'])
+
+        print(f"Logged in users after signup: {logged_in_users}")  # Debugging line
+
+        return jsonify({'message': 'Signup successful'})
+
+    return jsonify({'message': 'Method not allowed'}), 405
+
+def generate_random_user_id():
+    # Generate a random 6-digit user ID
+    return ''.join(random.choices(string.digits, k=6))
 
 def add_track_to_db(track_object, client):
     db = client.MusicDB
@@ -335,7 +364,7 @@ def liked_songs_of_user():
 
  
 
-if __name__ == "__main__":
+if _name_ == "_main_":
     app.secret_key = 'ygmr2002'
     app.run(host='0.0.0.0', port=105)
 
