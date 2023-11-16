@@ -8,7 +8,7 @@ import random
 import string
 
 
-app = Flask(_name_)
+app = Flask(__name__)
 app.secret_key = 'ygmr2002'
 
 
@@ -364,7 +364,7 @@ def liked_songs_of_user():
 
  
 
-if _name_ == "_main_":
+if __name__ == "__main__":
     app.secret_key = 'ygmr2002'
     app.run(host='0.0.0.0', port=105)
 
