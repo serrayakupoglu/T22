@@ -19,7 +19,9 @@ class _UserProfileState extends State<UserProfile> {
   }
 
   Future<String?> fetchData() async {
-    return await storageService.readSecureData('userName');
+    String? res = await storageService.readSecureData('username');
+    print(res);
+    return res;
   }
 
   @override

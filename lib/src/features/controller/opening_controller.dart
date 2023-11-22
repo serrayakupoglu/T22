@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:untitled1/src/features/screen/signup_screen.dart';
-import 'package:untitled1/src/features/screen/signin_screen.dart';
+import 'package:untitled1/src/features/screen/sign_up_screen.dart';
+import 'package:untitled1/src/features/screen/sign_in_screen.dart';
 
 class OpeningScreenController {
   final BuildContext context;

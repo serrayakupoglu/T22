@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:untitled1/src/features/screen/forgot_pass_screen.dart';
 import 'package:untitled1/src/features/screen/user_profile_screen.dart';
 import 'package:untitled1/src/features/service/storage_service.dart';
-import '../service/singin_service.dart';
+import '../service/sing_in_service.dart';
 
 class SignInScreenController {
   final BuildContext context;
@@ -29,16 +29,16 @@ class SignInScreenController {
     Navigator.of(context).pop();
   }
 
-  void signIn(String userName, String password) async {
+  void signIn(String username, String password) async {
 
       _createLoadingScreen();
-      final result = await _service.signIn(userName, password);
+      final result = await _service.signIn(username, password);
       _destroyLoadingScreen();
 
 
       if (result['success']) {
         print('Login successful');
-        storageService.writeSecureData('userName', userName);
+        storageService.writeSecureData('username', username);
         // Navigate to main page.
         _navigateToMainPage();
       }
@@ -49,7 +49,7 @@ class SignInScreenController {
           content: Text('Login failed: ${result['message']}'),
         ));
       }
-    }
+  }
 
 
   void navigateToForgotPass() {
