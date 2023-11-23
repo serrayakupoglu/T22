@@ -427,10 +427,69 @@ def fetch_from_id():
 ######################################
 @app.route('/search_song_from_db')
 def search_song():
-    term = request.args.get('song_name')
-    # Process the search term and return results
-    return 'Results for: {}'.format(term)
+    term = request.form.get('song_name')
 
+    # Connect to the database
+    client = connect_to_mongo()
+    db = client.MusicDB
+    track_collection = db.Track
+
+    # Use a regular expression to find tracks that match the search term
+    search_results = track_collection.find({'name': {'$regex': f'.*{term}.*', '$options': 'i'}})
+
+    # Convert the search_results cursor to a list
+    results = list(search_results)
+
+    if not results:
+        return jsonify({'results': []})
+
+    # Her bir şarkıyı daha ayrıntılı bir şekilde işleyerek sonuçları oluştur
+    formatted_results = []
+    for result in results:
+        formatted_result = {
+            'name': result['name'],
+            'artists': result['artists'],
+            'album': result['album'],
+            'popularity': result['popularity'],
+            # İhtiyaca göre diğer özellikleri de ekleyebilirsiniz
+        }
+        formatted_results.append(formatted_result)
+
+    # formatted_results listesini JSON formatına çevir
+    return jsonify({'results': formatted_results})
+
+@app.route('/search_tracks_by_artist')
+def search_tracks_by_artist():
+    artist_name = request.form.get('artist_name')
+
+    # Connect to the database
+    client = connect_to_mongo()
+    db = client.MusicDB
+    track_collection = db.Track
+
+    # Use a regular expression to find tracks that have the specified artist
+    search_results = track_collection.find({'artists.name': {'$regex': f'.*{artist_name}.*', '$options': 'i'}})
+
+    # Convert the search_results cursor to a list
+    results = list(search_results)
+
+    if not results:
+        return jsonify({'results': []})
+
+    # Her bir şarkıyı daha ayrıntılı bir şekilde işleyerek sonuçları oluştur
+    formatted_results = []
+    for result in results:
+        formatted_result = {
+            'name': result['name'],
+            'artists': result['artists'],
+            'album': result['album'],
+            'popularity': result['popularity'],
+            # İhtiyaca göre diğer özellikleri de ekleyebilirsiniz
+        }
+        formatted_results.append(formatted_result)
+
+    # formatted_results listesini JSON formatına çevir
+    return jsonify({'results': formatted_results})
 
 @app.route('/get_users_liked_songs')
 def liked_songs_of_user():
