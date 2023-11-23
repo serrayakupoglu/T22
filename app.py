@@ -1,5 +1,6 @@
 from flask import Flask, jsonify, request, session
 
+import certifi
 import requests
 import json 
 import secrets
@@ -123,15 +124,15 @@ from pymongo.server_api import ServerApi
 
 def connect_to_mongo():
     uri = "mongodb+srv://yagmurdolunay:yagmurdlny@musicdata.saqinen.mongodb.net/?retryWrites=true&w=majority"
-    # Create a new client and connect to the server
-    client = MongoClient(uri, server_api=ServerApi('1'))
-    # Send a ping to confirm a successful connection
+
     try:
-        client.admin.command('ping')
+        # Use certifi for SSL certificate verification
+        client = MongoClient(uri, server_api=ServerApi('1'), tlsCAFile=certifi.where())
+        client.admin.command('ping')  # Test connection
         print("Pinged your deployment. You successfully connected to MongoDB!")
         return client
     except Exception as e:
-        print(e)
+        print("Error connecting to MongoDB:", e)
         return None
 
 # Login/out and signup endpoints...
@@ -163,7 +164,7 @@ def login():
         # Check if the user exists and the password is correct
         if user and password == user['userPassword']:
             # Set the user in the session with a dynamic key
-            session[username] = True
+            session['username'] = username  # Corrected line
             return jsonify({'message': 'Login successful'})
         else:
             return jsonify({'message': 'Invalid username or password'}), 401
@@ -171,16 +172,36 @@ def login():
         return jsonify({'message': 'Bad Request - Missing credentials'}), 400
 
 
+
+def get_current_user():
+    # Get the current user from the session
+    username = session.get('username')
+    if username:
+        # Connect to the database
+        client = connect_to_mongo()
+        db = client.MusicDB
+        UserInfo_collection = db.UserInfo
+
+        # Find the user in the database
+        user = UserInfo_collection.find_one({'username': username})
+
+        return user
+
+    return None
+
+
+
+
 @app.route('/logout', methods=['POST'])
 def logout():
     # Check if the user is logged in
     username = request.form['username']
-    if username in session:
+    if 'username' in session and username == session['username']:
         # Clear the user from the session
-        session.pop(username, None)
+        session.pop('username', None)
         return jsonify({'message': 'Logout successful'})
     else:
-        return jsonify({'message': 'User not logged in'}), 401
+        return jsonify({'message': 'User not logged in or invalid username'}), 401
 
 '''@app.route('/signup', methods=['POST'])
 def signup():
@@ -267,6 +288,65 @@ def add(artist_name):
     except Exception as e:
         return 'Failed'
 
+
+
+
+@app.route('/add_followings', methods=['POST'])
+def add_followings():
+    # Check if the user is logged in
+    current_user = get_current_user()
+    if current_user is None:
+        return jsonify({'message': 'User not logged in'}), 401
+
+    try:
+        # Get the target username from the request body
+        target_username = request.form.get('target_username')
+
+        if not target_username:
+            return jsonify({'message': 'Target username is missing in the request body'}), 400
+
+        # Connect to the database
+        client = connect_to_mongo()
+        db = client.MusicDB
+        UserInfo_collection = db.UserInfo
+
+        # Find the target user in the database
+        target_user = UserInfo_collection.find_one({'username': target_username})
+
+        # Check if the target user exists
+        if target_user is None:
+            return jsonify({'message': 'Target user not found'}), 404
+
+        # Check if the current user is already following the target user
+        if current_user['username'] in target_user['followers']:
+            return jsonify({'message': 'User already follows the target user'}), 400
+
+        # Add the target user to the current user's followings
+        UserInfo_collection.update_one({'username': current_user['username']}, {'$push': {'following': target_user['username']}})
+
+        # Add the current user to the target user's followers
+        UserInfo_collection.update_one({'username': target_username}, {'$push': {'followers': current_user['username']}})
+
+        return jsonify({'message': f'User {current_user["username"]} is now following {target_username}'})
+
+    except Exception as e:
+        return jsonify({'message': f'Error: {str(e)}'}), 500
+
+def get_current_user():
+    # Get the current user from the session
+    username = session.get('username')
+    if username:
+        # Connect to the database
+        client = connect_to_mongo()
+        db = client.MusicDB
+        UserInfo_collection = db.UserInfo
+
+        # Find the user in the database
+        user = UserInfo_collection.find_one({'username': username})
+
+        return user
+
+    return None
 
 
 @app.route('/increase_rate/<track_name>')
