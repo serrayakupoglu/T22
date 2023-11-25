@@ -425,10 +425,13 @@ def fetch_from_id():
 
 # Search song from db
 ######################################
-@app.route('/search_song_from_db')
+@app.route('/search_song_from_db', methods=['POST'])
 def search_song():
-    term = request.form.get('song_name')
-
+    if'song_name' in request.form:#form-data
+        term = request.form.get('song_name')
+    else:#raw 
+        data = request.get_json(force=True)
+        term = data.get('song_name')
     # Connect to the database
     client = connect_to_mongo()
     db = client.MusicDB
@@ -458,10 +461,13 @@ def search_song():
     # formatted_results listesini JSON formatına çevir
     return jsonify({'results': formatted_results})
 
-@app.route('/search_tracks_by_artist')
+@app.route('/search_tracks_by_artist', methods=['POST'])
 def search_tracks_by_artist():
-    artist_name = request.form.get('artist_name')
-
+    if 'artist_name' in request.form:
+        artist_name = request.form.get('artist_name')
+    else:
+        data = request.get_json(force=True)
+        artist_name = data.get('artist_name')
     # Connect to the database
     client = connect_to_mongo()
     db = client.MusicDB
