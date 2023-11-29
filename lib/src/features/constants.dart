@@ -1,8 +1,6 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 
-const String kBaseUrl = "http://192.168.2.184:105";
+const String kBaseUrl = "http://192.168.1.24:105";
 const String kIconPath = 'lib/src/assets/my_icon.png';
 const String kFontMetrisch = "Metrisch";
 const double kHeaderMsgSize = 24;
@@ -73,3 +71,10 @@ const int kUserAlreadyExistsCode = 401;
 const String kUserAlreadyExistsMsg = "User Already Exists";
 const String kPasswordsDoNotMatchMsg = "Passwords do not match";
 
+// Forgot Pass
+const String kForgotPassAppBarText = "Forgot Password";
+const String kForgotPassHeaderText = "Verification";
+const String kForgotPassBodyText = "Please enter you e-mail to change your password";
+const String kForgotPassButtonText = "Send";
+const String kForgotPassCodeHeaderText = "Verification Code";
+const int kForgotPassBG = 0xFF131316;

@@ -4,6 +4,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:untitled1/src/features/common_widgets/body_text.dart';
 import 'package:untitled1/src/features/common_widgets/common_app_bar.dart';
+import 'package:untitled1/src/features/common_widgets/error_text.dart';
 import 'package:untitled1/src/features/common_widgets/header_text.dart';
 import 'package:untitled1/src/features/common_widgets/input_text_box.dart';
 import '../controller/sing_in_controller.dart';
@@ -17,12 +18,14 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-
+  
   @override
   Widget build(BuildContext context) {
     SignInScreenController controller = SignInScreenController(context);
     final TextEditingController emailController = TextEditingController();
     final TextEditingController passwordController = TextEditingController();
+    Color errorTextColor = Colors.white;
+    bool isError = false;
     return Scaffold(
       backgroundColor: const Color(kSignInPageBG),
       resizeToAvoidBottomInset: false,
@@ -45,9 +48,13 @@ class _LoginPageState extends State<LoginPage> {
                 Padding(padding: const EdgeInsets.only(bottom: kSignInPageSideMargin),
                   child: InputBox(innerText: kSignInPageUserNameInputText, controller: emailController, isObscure: false)
                 ),
-                Padding(padding: const EdgeInsets.only(bottom: kSignInPageSideMargin*2),
+                Padding(padding: const EdgeInsets.only(bottom: kSignInPageSideMargin),
                     child: InputBox(innerText: kSignInPagePasswordInputText, controller: passwordController, isObscure: true)
                 ),
+                Padding(padding: const EdgeInsets.only(bottom: kSignInPageSideMargin),
+                    child: ErrorText(msg: "ErrorMsg", clr: errorTextColor)
+                ),
+                Text("Kemal", style: TextStyle(color: isError ? Colors.red : Colors.white),),
                 Container(
                   alignment: Alignment.centerRight,
                   child: RichText(
@@ -75,7 +82,13 @@ class _LoginPageState extends State<LoginPage> {
               right: kOpeningButtonSideMargin,
             ),
             child: ElevatedButton(
-              onPressed: () async => {controller.signIn(emailController.text, passwordController.text)},
+              onPressed: () async => {
+                if (isError = await controller.signIn(emailController.text, passwordController.text)) {
+                  setState(() {
+                    print(isError);
+                  })
+                }
+              },
               style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.fromLTRB(kOpeningButtonSidePadding, kOpeningButtonVerticalPadding, kOpeningButtonSidePadding, kOpeningButtonVerticalPadding),
                   backgroundColor: const Color(kOpeningButtonBG),

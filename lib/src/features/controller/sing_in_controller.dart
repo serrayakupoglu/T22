@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:untitled1/src/features/screen/forgot_pass_screen.dart';
+import 'package:untitled1/src/features/screen/fotgot_pass/forgot_pass_screen_first.dart';
 import 'package:untitled1/src/features/screen/user_profile_screen.dart';
 import 'package:untitled1/src/features/service/storage_service.dart';
 import '../service/sing_in_service.dart';
@@ -7,7 +7,7 @@ import '../service/sing_in_service.dart';
 class SignInScreenController {
   final BuildContext context;
   SignInScreenController(this.context);
-
+  bool isError = false;
   final SignInService _service = SignInService();
 
   void _createLoadingScreen() {
@@ -29,7 +29,7 @@ class SignInScreenController {
     Navigator.of(context).pop();
   }
 
-  void signIn(String username, String password) async {
+  Future<bool> signIn(String username, String password) async {
 
       _createLoadingScreen();
       final result = await _service.signIn(username, password);
@@ -43,12 +43,17 @@ class SignInScreenController {
         _navigateToMainPage();
       }
       else {
+        return true;
         print('Login failed: ${result['message']}');
-        if (!context.mounted) return;
+        if (!context.mounted) return true;
+
+        /*
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('Login failed: ${result['message']}'),
         ));
+         */
       }
+      return false;
   }
 
 
@@ -63,4 +68,5 @@ class SignInScreenController {
       return UserProfile();
     }));
   }
+
 }

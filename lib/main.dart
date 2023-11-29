@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:untitled1/src/features/screen/example_song.dart';
+import 'package:untitled1/src/features/screen/fotgot_pass/forgot_pass_code_screen.dart';
 import 'package:untitled1/src/features/screen/opening_screen.dart';
-import 'package:untitled1/src/features/screen/sign_in_screen.dart';
-import 'package:untitled1/src/features/screen/user_profile_screen.dart';
 
 
 void main() {
@@ -18,7 +18,7 @@ class MyApp extends StatelessWidget {
         primaryColor: const Color(0xFF003049), // Custom primary color
         fontFamily: 'Montserrat',        // Custom font
       ),
-      home:OpeningPage(),
+      home:SongScreen(),
 
     );
   }

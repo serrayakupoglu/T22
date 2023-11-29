@@ -15,10 +15,10 @@ class SignUpController {
       _navigateToSignInPage();
     }
     else {
-      print('Login failed: ${result['message']}');
+      print('Sign Up Failed: ${result['message']}');
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Login failed: ${result['message']}'),
+        content: Text('SignUp failed: ${result['message']}'),
       ));
     }
   }
