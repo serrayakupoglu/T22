@@ -331,6 +331,48 @@ def add_followings():
 
     except Exception as e:
         return jsonify({'message': f'Error: {str(e)}'}), 500
+    
+
+@app.route('/unfollow', methods=['POST'])
+def unfollow_user():
+    # Check if the user is logged in
+    current_user = get_current_user()
+    if current_user is None:
+        return jsonify({'message': 'User not logged in'}), 401
+
+    try:
+        # Get the target username from the request body
+        target_username = request.form.get('target_username')
+
+        if not target_username:
+            return jsonify({'message': 'Target username is missing in the request body'}), 400
+
+        # Connect to the database
+        client = connect_to_mongo()
+        db = client.MusicDB
+        UserInfo_collection = db.UserInfo
+
+        # Find the target user in the database
+        target_user = UserInfo_collection.find_one({'username': target_username})
+
+        # Check if the target user exists
+        if target_user is None:
+            return jsonify({'message': 'Target user not found'}), 404
+
+        # Check if the current user is following the target user
+        if current_user['username'] not in target_user['followers']:
+            return jsonify({'message': 'User is not following the target user'}), 400
+
+        # Remove the target user from the current user's followings
+        UserInfo_collection.update_one({'username': current_user['username']}, {'$pull': {'following': target_user['username']}})
+
+        # Remove the current user from the target user's followers
+        UserInfo_collection.update_one({'username': target_username}, {'$pull': {'followers': current_user['username']}})
+
+        return jsonify({'message': f'User {current_user["username"]} has unfollowed {target_username}'})
+
+    except Exception as e:
+        return jsonify({'message': f'Error: {str(e)}'}), 500
 
 def get_current_user():
     # Get the current user from the session
@@ -425,77 +467,12 @@ def fetch_from_id():
 
 # Search song from db
 ######################################
-@app.route('/search_song_from_db', methods=['POST'])
+@app.route('/search_song_from_db')
 def search_song():
-    if'song_name' in request.form:#form-data
-        term = request.form.get('song_name')
-    else:#raw 
-        data = request.get_json(force=True)
-        term = data.get('song_name')
-    # Connect to the database
-    client = connect_to_mongo()
-    db = client.MusicDB
-    track_collection = db.Track
+    term = request.args.get('song_name')
+    # Process the search term and return results
+    return 'Results for: {}'.format(term)
 
-    # Use a regular expression to find tracks that match the search term
-    search_results = track_collection.find({'name': {'$regex': f'.*{term}.*', '$options': 'i'}})
-
-    # Convert the search_results cursor to a list
-    results = list(search_results)
-
-    if not results:
-        return jsonify({'results': []})
-
-    # Her bir şarkıyı daha ayrıntılı bir şekilde işleyerek sonuçları oluştur
-    formatted_results = []
-    for result in results:
-        formatted_result = {
-            'name': result['name'],
-            'artists': result['artists'],
-            'album': result['album'],
-            'popularity': result['popularity'],
-            # İhtiyaca göre diğer özellikleri de ekleyebilirsiniz
-        }
-        formatted_results.append(formatted_result)
-
-    # formatted_results listesini JSON formatına çevir
-    return jsonify({'results': formatted_results})
-
-@app.route('/search_tracks_by_artist', methods=['POST'])
-def search_tracks_by_artist():
-    if 'artist_name' in request.form:
-        artist_name = request.form.get('artist_name')
-    else:
-        data = request.get_json(force=True)
-        artist_name = data.get('artist_name')
-    # Connect to the database
-    client = connect_to_mongo()
-    db = client.MusicDB
-    track_collection = db.Track
-
-    # Use a regular expression to find tracks that have the specified artist
-    search_results = track_collection.find({'artists.name': {'$regex': f'.*{artist_name}.*', '$options': 'i'}})
-
-    # Convert the search_results cursor to a list
-    results = list(search_results)
-
-    if not results:
-        return jsonify({'results': []})
-
-    # Her bir şarkıyı daha ayrıntılı bir şekilde işleyerek sonuçları oluştur
-    formatted_results = []
-    for result in results:
-        formatted_result = {
-            'name': result['name'],
-            'artists': result['artists'],
-            'album': result['album'],
-            'popularity': result['popularity'],
-            # İhtiyaca göre diğer özellikleri de ekleyebilirsiniz
-        }
-        formatted_results.append(formatted_result)
-
-    # formatted_results listesini JSON formatına çevir
-    return jsonify({'results': formatted_results})
 
 @app.route('/get_users_liked_songs')
 def liked_songs_of_user():
