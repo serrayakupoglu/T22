@@ -389,6 +389,109 @@ def get_current_user():
         return user
 
     return None
+##################################
+# Endpoint to get followers of a user by username
+@app.route('/get_followers', methods=['GET'])
+def get_followers_endpoint():
+    try:
+        # Get the target username from the request parameters
+        target_username = request.args.get('username')
+
+        if not target_username:
+            return jsonify({'message': 'Target username is missing in the request parameters'}), 400
+
+        # Connect to the database
+        client = connect_to_mongo()
+        db = client.MusicDB
+        UserInfo_collection = db.UserInfo
+
+        # Find the target user in the database
+        target_user = UserInfo_collection.find_one({'username': target_username})
+
+        # Check if the target user exists
+        if target_user is None:
+            return jsonify({'message': 'Target user not found'}), 404
+
+        # Return the followers as an array of strings
+        followers = [str(follower) for follower in target_user['followers']]
+
+        return jsonify({'followers': followers})
+
+    except Exception as e:
+        return jsonify({'message': f'Error: {str(e)}'}), 500
+
+
+# Endpoint to get followees of a user by username
+@app.route('/get_followees', methods=['GET'])
+def get_followees_endpoint():
+    try:
+        # Get the target username from the request parameters
+        target_username = request.args.get('username')
+
+        if not target_username:
+            return jsonify({'message': 'Target username is missing in the request parameters'}), 400
+
+        # Connect to the database
+        client = connect_to_mongo()
+        db = client.MusicDB
+        UserInfo_collection = db.UserInfo
+
+        # Find the target user in the database
+        target_user = UserInfo_collection.find_one({'username': target_username})
+
+        # Check if the target user exists
+        if target_user is None:
+            return jsonify({'message': 'Target user not found'}), 404
+
+        # Return the followees as an array of strings
+        followees = [str(followee) for followee in target_user['following']]
+
+        return jsonify({'followees': followees})
+
+    except Exception as e:
+        return jsonify({'message': f'Error: {str(e)}'}), 500
+
+    
+###############################################
+
+# Endpoint to get profile information by username
+@app.route('/get_profile', methods=['GET'])
+def get_profile_endpoint():
+    try:
+        # Get the target username from the request parameters
+        target_username = request.args.get('username')
+
+        if not target_username:
+            return jsonify({'message': 'Target username is missing in the request parameters'}), 400
+
+        # Connect to the database
+        client = connect_to_mongo()
+        db = client.MusicDB
+        UserInfo_collection = db.UserInfo
+
+        # Find the target user in the database
+        target_user = UserInfo_collection.find_one({'username': target_username})
+
+        # Check if the target user exists
+        if target_user is None:
+            return jsonify({'message': 'Target user not found'}), 404
+
+        # You can customize the response format based on your needs
+        profile_info = {
+            'name': target_user['name'],
+            'surname': target_user['surname'],
+            'username': target_user['username'],
+            'followers': [str(follower) for follower in target_user['followers']],
+            'following': [str(followee) for followee in target_user['following']],
+            'likedSongs': [str(song) for song in target_user['likedSongs']]
+        }
+
+        return jsonify({'profile_info': profile_info})
+
+    except Exception as e:
+        return jsonify({'message': f'Error: {str(e)}'}), 500
+#####################################################
+
 
 
 @app.route('/increase_rate/<track_name>')
@@ -474,6 +577,32 @@ def search_song():
     return 'Results for: {}'.format(term)
 
 
+@app.route('/search_song_from_db', methods=['POST'])
+def search_song_from_db():
+    try:
+        # Get the search term from the form data
+        search_term = request.form.get('song_name')
+
+        if not search_term:
+            return jsonify({'message': 'Search term is missing in the form data'}), 400
+
+        # Connect to the database
+        client = connect_to_mongo()
+        db = client.MusicDB
+        Track_collection = db.Track
+
+        # Perform the search in the database
+        search_results = Track_collection.find({'name': {'$regex': search_term, '$options': 'i'}})
+
+        # Convert the results to a list for easier processing
+        results_list = list(search_results)
+
+        # You can further process the results or format them as needed
+        # For now, let's just return the results as JSON
+        return jsonify({'search_results': results_list})
+
+    except Exception as e:
+        return jsonify({'message': f'Error: {str(e)}'}), 500
 @app.route('/get_users_liked_songs')
 def liked_songs_of_user():
     term = request.args.get('username')
@@ -489,76 +618,3 @@ def liked_songs_of_user():
 if __name__ == "__main__":
     app.secret_key = 'ygmr2002'
     app.run(host='0.0.0.0', port=105)
-
-
-
-
-
-
-'''
-# Post with body params example
-@app.route('/echo', methods=['POST'])
-def echo():
-    data = request.json
-    return jsonify(data)
-'''
-
-'''
-    start = time.time()
-    username = request.args.get('user_name')
-    msg = "Successful"
-    api_response = {}
-
-    # cookie check
-    insta.check_insta_cookies()
-
-    # get_user_details
-    try:
-        user_id, followees, followers = insta.get_user_details(username)
-        if (user_id == "User Not Found"):
-            msg = "User not found!"
-            api_response = {"message": msg}
-            return api_response
-    except Exception as e:
-        msg = "get_user_details failed" + str(e)
-        api_response = {"message": msg}
-        return api_response
-
-    processes = []
-    manager = multiprocessing.Manager()
-    return_dict = manager.dict()
-
-    if False:
-        #insta.follow(response)
-        msg = "Follow request has been sent!"
-        api_response = {"message": msg}
-        print(msg)
-    else:
-        p1 = multiprocessing.Process(target = get_followees, args=(user_id, followees, username, return_dict))
-        p2 = multiprocessing.Process(target = get_followers, args=(user_id, followers, username, return_dict))
-        p1.start()
-        p2.start()
-        processes.append(p1)
-        processes.append(p2)
-
-        # Joins all the processes 
-        for p in processes:
-            p.join()
-
-    api_response = {
-        "name": response,
-        "followees": return_dict["followees"],
-        "followers": return_dict["followers"],
-        "message": "Successful",
-        "response_time" : time.time()-start
-    }
-    print("Succesful")
-    print(time.time()-start)
-    return jsonify(api_response)
-
-def get_followees(user_id, followees, username, return_dict):
-    return_dict["followees"] = insta.get_followees(user_id, followees, username)
-
-def get_followers(user_id, followers, username, return_dict):
-    return_dict["followers"] = insta.get_followers(user_id, followers, username)
-'''
