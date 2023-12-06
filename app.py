@@ -203,12 +203,7 @@ def logout():
     else:
         return jsonify({'message': 'User not logged in or invalid username'}), 401
 
-'''@app.route('/signup', methods=['POST'])
-def signup():
-    username = request.form['username']
-    password = request.form['password']
-    return 'Signing up %s with password %s' % ((username), (password))
-######################################'''
+
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     if request.method == 'POST':
@@ -242,7 +237,9 @@ def signup():
             'userPassword': password,
             'followers': [],
             'following': [],
-            'likedSongs': []
+            'likedSongs': [],
+             'rated_songs': [] 
+
             # Add other user-related fields as needed
         }
         insert_result = UserInfo_collection.insert_one(new_user)
@@ -370,6 +367,51 @@ def unfollow_user():
         UserInfo_collection.update_one({'username': target_username}, {'$pull': {'followers': current_user['username']}})
 
         return jsonify({'message': f'User {current_user["username"]} has unfollowed {target_username}'})
+
+    except Exception as e:
+        return jsonify({'message': f'Error: {str(e)}'}), 500
+    
+
+
+# Endpoint to rate a song
+@app.route('/rate_song', methods=['POST'])
+def rate_song():
+    # Check if the user is logged in
+    current_user = get_current_user()
+    if current_user is None:
+        return jsonify({'message': 'User not logged in'}), 401
+
+    try:
+        # Get the song name and rating from the request body
+        song_name = request.form.get('song_name')
+        rating = int(request.form.get('rating'))
+
+        if not song_name or rating is None:
+            return jsonify({'message': 'Song name or rating is missing in the request body'}), 400
+
+        # Validate the rating (between 1 and 10)
+        if 1 <= rating <= 10:
+            # Connect to the database
+            client = connect_to_mongo()
+            db = client.MusicDB
+            Track_collection = db.Track
+            UserInfo_collection = db.UserInfo
+
+            # Check if the song exists in the Track_collection
+            song = Track_collection.find_one({'name': song_name})
+            if song is None:
+                return jsonify({'message': 'Song not found in the track collection'}), 404
+
+            # Add the rated song information to the user's document
+            UserInfo_collection.update_one(
+                {'username': current_user['username']},
+                {'$push': {'rated_songs': {song_name: rating}}}
+            )
+
+            return jsonify({'message': f'Successfully rated the song {song_name} with {rating} stars'})
+
+        else:
+            return jsonify({'message': 'Invalid rating. Please provide a rating between 1 and 10'}), 400
 
     except Exception as e:
         return jsonify({'message': f'Error: {str(e)}'}), 500
@@ -618,3 +660,76 @@ def liked_songs_of_user():
 if __name__ == "__main__":
     app.secret_key = 'ygmr2002'
     app.run(host='0.0.0.0', port=105)
+
+
+
+
+
+
+'''
+# Post with body params example
+@app.route('/echo', methods=['POST'])
+def echo():
+    data = request.json
+    return jsonify(data)
+'''
+
+'''
+    start = time.time()
+    username = request.args.get('user_name')
+    msg = "Successful"
+    api_response = {}
+
+    # cookie check
+    insta.check_insta_cookies()
+
+    # get_user_details
+    try:
+        user_id, followees, followers = insta.get_user_details(username)
+        if (user_id == "User Not Found"):
+            msg = "User not found!"
+            api_response = {"message": msg}
+            return api_response
+    except Exception as e:
+        msg = "get_user_details failed" + str(e)
+        api_response = {"message": msg}
+        return api_response
+
+    processes = []
+    manager = multiprocessing.Manager()
+    return_dict = manager.dict()
+
+    if False:
+        #insta.follow(response)
+        msg = "Follow request has been sent!"
+        api_response = {"message": msg}
+        print(msg)
+    else:
+        p1 = multiprocessing.Process(target = get_followees, args=(user_id, followees, username, return_dict))
+        p2 = multiprocessing.Process(target = get_followers, args=(user_id, followers, username, return_dict))
+        p1.start()
+        p2.start()
+        processes.append(p1)
+        processes.append(p2)
+
+        # Joins all the processes 
+        for p in processes:
+            p.join()
+
+    api_response = {
+        "name": response,
+        "followees": return_dict["followees"],
+        "followers": return_dict["followers"],
+        "message": "Successful",
+        "response_time" : time.time()-start
+    }
+    print("Succesful")
+    print(time.time()-start)
+    return jsonify(api_response)
+
+def get_followees(user_id, followees, username, return_dict):
+    return_dict["followees"] = insta.get_followees(user_id, followees, username)
+
+def get_followers(user_id, followers, username, return_dict):
+    return_dict["followers"] = insta.get_followers(user_id, followers, username)
+'''
