@@ -6,6 +6,8 @@ This project is a system that gathers users' data of liked songs and then the pr
 ## Table of Content 
 - [Features](#features)
 - [Installation](#installation)
+- [Pogress of the groups](#progressofthegroups)
+- [Tecnology](#technology)
 - [Usage](#usage)
 - [Authors](#Authors)
 
@@ -14,15 +16,23 @@ This project is a system that gathers users' data of liked songs and then the pr
 - Rating a songs lyrics and melody
 -  Song recommendations based on liked songs and friends playlists
 - Analysis of song preferences and common features of liked songs.
+- 
 
 
 ## Installation 
 1. Clone the repository
 '''
- ' $ git clone https://github.com/serrayakupoglu/T22.git '
+<p> $ git clone https://github.com/serrayakupoglu/T22.git</p> 
 
-## Usage
 
+## The progress of the groups
+Backend Group 
+Web Group
+Mobile Group
+
+## Technology 
+
+## Usage 
 
 ## Authors
 1. Backend group: Yagmur Dolunay, Ata Egemen Gurel
