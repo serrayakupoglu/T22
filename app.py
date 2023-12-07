@@ -673,6 +673,47 @@ def search_song_from_db():
 
 
 ###################Search panel#############
+# Endpoint to search for users by username
+@app.route('/search_user', methods=['POST'])
+def search_user():
+    try:
+        # Get the search term from the form data or raw JSON
+        if 'username' in request.form:  # form-data
+            term = request.form.get('username')
+        else:  # raw JSON
+            data = request.get_json(force=True)
+            term = data.get('username')
+
+        # Connect to the database
+        client = connect_to_mongo()
+        db = client.MusicDB
+        UserInfo_collection = db.UserInfo
+
+        # Use a regular expression to find users that match the search term
+        search_results = UserInfo_collection.find({'username': {'$regex': f'.*{term}.*', '$options': 'i'}})
+
+        # Convert the search_results cursor to a list
+        results = list(search_results)
+
+        if not results:
+            return jsonify({'results': []})
+
+        # Process each user result and format the response
+        formatted_results = []
+        for result in results:
+            formatted_result = {
+                'name': result.get('name', ''),
+                'surname': result.get('surname', ''),
+                'username': result.get('username', ''),
+                # You can include other user-related fields as needed
+            }
+            formatted_results.append(formatted_result)
+
+        # Convert the formatted_results list to JSON format
+        return jsonify({'results': formatted_results})
+
+    except Exception as e:
+        return jsonify({'message': f'Error: {str(e)}'}), 500
 @app.route('/search_song', methods=['POST'])
 def search_song():
     if'song_name' in request.form:#form-data
