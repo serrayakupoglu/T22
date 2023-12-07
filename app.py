@@ -271,7 +271,7 @@ def add_track_to_db(track_object, client):
 
 
 
-
+######################################
 @app.route('/add_tracks_to_db/<artist_name>')
 def add(artist_name):
     try:
@@ -287,7 +287,7 @@ def add(artist_name):
 
 
 
-
+#################################
 @app.route('/add_followings', methods=['POST'])
 def add_followings():
     # Check if the user is logged in
@@ -536,6 +536,8 @@ def get_profile_endpoint():
 
 
 
+
+
 @app.route('/increase_rate/<track_name>')
 def increase_rate(track_name):        
     client = connect_to_mongo()
@@ -617,34 +619,89 @@ def search_song():
     term = request.args.get('song_name')
     # Process the search term and return results
     return 'Results for: {}'.format(term)
+# Search song from db
+######################################
 
 
+
+
+###################Search panel#############
 @app.route('/search_song_from_db', methods=['POST'])
-def search_song_from_db():
-    try:
-        # Get the search term from the form data
-        search_term = request.form.get('song_name')
+def search_song():
+    if'song_name' in request.form:#form-data
+        term = request.form.get('song_name')
+    else:#raw 
+        data = request.get_json(force=True)
+        term = data.get('song_name')
+    # Connect to the database
+    client = connect_to_mongo()
+    db = client.MusicDB
+    track_collection = db.Track
 
-        if not search_term:
-            return jsonify({'message': 'Search term is missing in the form data'}), 400
+    # Use a regular expression to find tracks that match the search term
+    search_results = track_collection.find({'name': {'$regex': f'.*{term}.*', '$options': 'i'}})
 
-        # Connect to the database
-        client = connect_to_mongo()
-        db = client.MusicDB
-        Track_collection = db.Track
+    # Convert the search_results cursor to a list
+    results = list(search_results)
 
-        # Perform the search in the database
-        search_results = Track_collection.find({'name': {'$regex': search_term, '$options': 'i'}})
+    if not results:
+        return jsonify({'results': []})
 
-        # Convert the results to a list for easier processing
-        results_list = list(search_results)
+    # Her bir şarkıyı daha ayrıntılı bir şekilde işleyerek sonuçları oluştur
+    formatted_results = []
+    for result in results:
+        formatted_result = {
+            'name': result['name'],
+            'artists': result['artists'],
+            'album': result['album'],
+            'popularity': result['popularity'],
+            # İhtiyaca göre diğer özellikleri de ekleyebilirsiniz
+        }
+        formatted_results.append(formatted_result)
 
-        # You can further process the results or format them as needed
-        # For now, let's just return the results as JSON
-        return jsonify({'search_results': results_list})
+    # formatted_results listesini JSON formatına çevir
+    return jsonify({'results': formatted_results})
 
-    except Exception as e:
-        return jsonify({'message': f'Error: {str(e)}'}), 500
+@app.route('/search_tracks_by_artist', methods=['POST'])
+def search_tracks_by_artist():
+    if 'artist_name' in request.form:
+        artist_name = request.form.get('artist_name')
+    else:
+        data = request.get_json(force=True)
+        artist_name = data.get('artist_name')
+    # Connect to the database
+    client = connect_to_mongo()
+    db = client.MusicDB
+    track_collection = db.Track
+
+    # Use a regular expression to find tracks that have the specified artist
+    search_results = track_collection.find({'artists.name': {'$regex': f'.*{artist_name}.*', '$options': 'i'}})
+
+    # Convert the search_results cursor to a list
+    results = list(search_results)
+
+    if not results:
+        return jsonify({'results': []})
+
+    # Her bir şarkıyı daha ayrıntılı bir şekilde işleyerek sonuçları oluştur
+    formatted_results = []
+    for result in results:
+        formatted_result = {
+            'name': result['name'],
+            'artists': result['artists'],
+            'album': result['album'],
+            'popularity': result['popularity'],
+            # İhtiyaca göre diğer özellikleri de ekleyebilirsiniz
+        }
+        formatted_results.append(formatted_result)
+
+    # formatted_results listesini JSON formatına çevir
+    return jsonify({'results': formatted_results})
+
+
+
+######get user's liked songs#################
+
 @app.route('/get_users_liked_songs')
 def liked_songs_of_user():
     term = request.args.get('username')
