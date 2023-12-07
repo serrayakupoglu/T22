@@ -371,7 +371,54 @@ def unfollow_user():
     except Exception as e:
         return jsonify({'message': f'Error: {str(e)}'}), 500
     
+# Endpoint to add a song and its artist to the likedSongs array
+@app.route('/add_to_liked_songs', methods=['POST'])
+def add_to_liked_songs():
+    try:
+        # Get data from the request
+        username = request.form.get('username')
+        song_name = request.form.get('song_name')
 
+        if not username or not song_name:
+            return jsonify({'message': 'Required data is missing in the form data'}), 400
+
+        # Connect to the database
+        client = connect_to_mongo()
+        db = client.MusicDB
+        UserInfo_collection = db.UserInfo
+        Track_collection = db.Track
+
+        # Check if the user exists
+        user = UserInfo_collection.find_one({'username': username})
+        if user is None:
+            return jsonify({'message': 'User not found'}), 404
+
+        # Search for the song in the Track collection to get its artist
+        track = Track_collection.find_one({'name': song_name})
+
+        if track is None:
+            return jsonify({'message': f'Song "{song_name}" not found in the database'}), 404
+
+        # Get the artist from the track
+        artist_name = track['artists'][0]['name'] if 'artists' in track and track['artists'] else None
+
+        if artist_name is None:
+            return jsonify({'message': f'Artist not found for song "{song_name}"'}), 404
+
+        # Check if the song and artist combination is already in likedSongs
+        existing_entry = next((entry for entry in user['likedSongs'] if entry['song'] == song_name and entry['artist'] == artist_name), None)
+
+        if existing_entry:
+            return jsonify({'message': 'Song and artist already in likedSongs'}), 400
+
+        # Add the new entry to likedSongs
+        new_entry = {'song': song_name, 'artist': artist_name}
+        UserInfo_collection.update_one({'username': username}, {'$push': {'likedSongs': new_entry}})
+
+        return jsonify({'message': f'Song "{song_name}" by "{artist_name}" added to likedSongs'})
+
+    except Exception as e:
+        return jsonify({'message': f'Error: {str(e)}'}), 500
 
 # Endpoint to rate a song
 @app.route('/rate_song', methods=['POST'])
@@ -615,7 +662,7 @@ def fetch_from_id():
 # Search song from db
 ######################################
 @app.route('/search_song_from_db')
-def search_song():
+def search_song_from_db():
     term = request.args.get('song_name')
     # Process the search term and return results
     return 'Results for: {}'.format(term)
@@ -626,7 +673,7 @@ def search_song():
 
 
 ###################Search panel#############
-@app.route('/search_song_from_db', methods=['POST'])
+@app.route('/search_song', methods=['POST'])
 def search_song():
     if'song_name' in request.form:#form-data
         term = request.form.get('song_name')
