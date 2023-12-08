@@ -194,14 +194,19 @@ def get_current_user():
 
 @app.route('/logout', methods=['POST'])
 def logout():
-    # Check if the user is logged in
-    username = request.form['username']
-    if 'username' in session and username == session['username']:
-        # Clear the user from the session
-        session.pop('username', None)
-        return jsonify({'message': 'Logout successful'})
-    else:
-        return jsonify({'message': 'User not logged in or invalid username'}), 401
+    try:
+        # Check if the user is logged in
+        username = request.form['username']
+        
+        # Check if the username in the session matches the one provided in the request
+        if 'username' in session and username == session['username']:
+            # Clear the user from the session
+            session.pop('username', None)
+            return jsonify({'message': 'Logout successful'})
+        else:
+            return jsonify({'message': 'User not logged in or invalid username'}), 401
+    except Exception as e:
+        return jsonify({'message': f'Error: {str(e)}'}), 500
 
 
 @app.route('/signup', methods=['GET', 'POST'])
