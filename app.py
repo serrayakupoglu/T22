@@ -565,7 +565,7 @@ def get_profile_endpoint():
         if target_user is None:
             return jsonify({'message': 'Target user not found'}), 404
 
-        # You can customize the response format based on your needs
+        
         profile_info = {
             'name': target_user['name'],
             'surname': target_user['surname'],
@@ -582,7 +582,118 @@ def get_profile_endpoint():
 #####################################################
 
 
+# Endpoint to create a new playlist
+@app.route('/create_playlist', methods=['POST'])
+def create_playlist():
+    try:
 
+        # Get data from the request body
+        
+        playlist_name = request.form.get('playlist_name')
+
+        # Perform necessary validation and database operations to create the playlist
+        client = connect_to_mongo()
+        db = client.MusicDB
+        UserInfo_collection = db.UserInfo
+
+        # Get the current user from the session
+        username = session.get('username')
+
+        if username:
+            # Find the user in the database
+            user = UserInfo_collection.find_one({'username': username})
+
+            if user:
+                # Create the new playlist object with an empty list of tracks
+                new_playlist = {
+                    'playlist_name': playlist_name,
+                    'tracks': [],
+                }
+
+                # Add the playlist to the user's playlists array
+                UserInfo_collection.update_one({'username': username}, {'$push': {'playlists': new_playlist}})
+
+                return jsonify({'message': 'Playlist created successfully'})
+            else:
+                return jsonify({'message': 'User not found'}), 404
+        else:
+            return jsonify({'message': 'User not logged in'}), 401
+
+    except Exception as e:
+        return jsonify({'message': f'Error: {str(e)}'}), 500
+
+
+'''
+@app.route('/add_to_playlist', methods=['POST'])
+def add_to_playlist():
+    try:
+        # Get data from the request body
+        playlist_name = request.form.get('playlist_name')
+        track_name = request.form.get('track_name')
+
+        # Perform necessary validation and database operations to add tracks to the playlist
+        client = connect_to_mongo()
+        db = client.MusicDB
+        UserInfo_collection = db.UserInfo
+        Track_collection = db.Track
+
+        # Get the current user from the session
+        username = session.get('username')
+
+        if username:
+            # Find the user in the database
+            user = UserInfo_collection.find_one({'username': username})
+
+            if user:
+                # Find the playlist in the user's playlists array
+                playlist_to_update = next((playlist for playlist in user.get('playlists', []) if playlist['playlist_name'] == playlist_name), None)
+
+                if playlist_to_update:
+                    # Search for the track in the Track collection
+                    track = Track_collection.find_one({'name': track_name})
+
+                    if track:
+                        # Add the track object to the playlist
+                        playlist_to_update['tracks'].append(track)
+
+                        # Update the playlist in the user's playlists array
+                        UserInfo_collection.update_one(
+                            {'username': username, 'playlists.playlist_name': playlist_name},
+                            {'$set': {'playlists.$': playlist_to_update}}
+                        )
+
+                        return jsonify({'message': f'Track "{track_name}" added to the playlist "{playlist_name}" successfully'})
+                    else:
+                        return jsonify({'message': f'Track "{track_name}" not found in the database'}), 404
+                else:
+                    return jsonify({'message': 'Playlist not found'}), 404
+            else:
+                return jsonify({'message': 'User not found'}), 404
+        else:
+            return jsonify({'message': 'User not logged in'}), 401
+
+    except Exception as e:
+        return jsonify({'message': f'Error: {str(e)}'}), 500
+'''
+'''
+# Endpoint to get all tracks from the database
+@app.route('/get_all_tracks', methods=['GET'])
+def get_all_tracks():
+    try:
+        # Connect to the database
+        client = connect_to_mongo()
+        db = client.MusicDB
+        Track_collection = db.Track
+
+        # Retrieve all tracks from the Track collection
+        all_tracks = list(Track_collection.find({}))
+
+        # You can further process the results or format them as needed
+        # For now, let's just return the tracks as JSON
+        return jsonify({'all_tracks': all_tracks})
+
+    except Exception as e:
+        return jsonify({'message': f'Error: {str(e)}'}), 500
 
 
 @app.route('/increase_rate/<track_name>')
@@ -612,7 +723,7 @@ def increase_rate(track_name):
         return None
 
 
-
+'''
 
 @app.route('/decrease_rate/<track_name>')
 def decrease_rate(track_name):
@@ -714,6 +825,7 @@ def search_user():
 
     except Exception as e:
         return jsonify({'message': f'Error: {str(e)}'}), 500
+
 @app.route('/search_song', methods=['POST'])
 def search_song():
     if'song_name' in request.form:#form-data
@@ -735,7 +847,7 @@ def search_song():
     if not results:
         return jsonify({'results': []})
 
-    # Her bir şarkıyı daha ayrıntılı bir şekilde işleyerek sonuçları oluştur
+    
     formatted_results = []
     for result in results:
         formatted_result = {
@@ -743,11 +855,11 @@ def search_song():
             'artists': result['artists'],
             'album': result['album'],
             'popularity': result['popularity'],
-            # İhtiyaca göre diğer özellikleri de ekleyebilirsiniz
+            
         }
         formatted_results.append(formatted_result)
 
-    # formatted_results listesini JSON formatına çevir
+   
     return jsonify({'results': formatted_results})
 
 @app.route('/search_tracks_by_artist', methods=['POST'])
