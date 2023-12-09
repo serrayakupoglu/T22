@@ -10,11 +10,11 @@ import string
 
 
 app = Flask(__name__)
-app.secret_key = 'ygmr2002'
+app.secret_key = secrets.token_hex(16)
 
 app.config['SECRET_KEY'] = 'ygmr2002'
 app.config['SESSION_PERMANENT'] = True
-app.config['SESSION_TYPE'] = 'filesystem'
+
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)  # Set as needed
 app.config['SESSION_TYPE'] = 'redis'
 app.config['SESSION_PERMANENT'] = True
