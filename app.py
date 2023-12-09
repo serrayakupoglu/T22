@@ -320,6 +320,10 @@ def add_followings():
     current_user = get_current_user()
 
     try:
+        # Check if the current user is logged in
+        if current_user is None:
+            return jsonify({'message': 'User not logged in'}), 401
+
         # Get the target username from the request body
         target_username = request.form.get('target_username')
 
@@ -339,12 +343,11 @@ def add_followings():
             return jsonify({'message': 'Target user not found'}), 404
 
         # Check if the current user is already following the target user
-        if current_user and current_user['username'] in target_user.get('followers', []):
+        if current_user['username'] in target_user.get('followers', []):
             return jsonify({'message': 'User already follows the target user'}), 400
 
         # Add the target user to the current user's followings
-        if current_user:
-            UserInfo_collection.update_one({'username': current_user['username']}, {'$push': {'following': target_user['username']}})
+        UserInfo_collection.update_one({'username': current_user['username']}, {'$push': {'following': target_user['username']}})
 
         # Add the current user to the target user's followers
         UserInfo_collection.update_one({'username': target_username}, {'$push': {'followers': current_user['username']}})
@@ -393,6 +396,8 @@ def unfollow_user():
 
     except Exception as e:
         return jsonify({'message': f'Error: {str(e)}'}), 500
+    
+
 # Endpoint to add a song and its artist to the likedSongs array
 @app.route('/add_to_liked_songs', methods=['POST'])
 def add_to_liked_songs():
@@ -645,7 +650,6 @@ def create_playlist():
 
 
 
-# Endpoint to add tracks to a playlist
 @app.route('/add_to_playlist', methods=['POST'])
 def add_to_playlist():
     try:
@@ -668,18 +672,21 @@ def add_to_playlist():
         UserInfo_collection = db.UserInfo
         Track_collection = db.Track
 
-        # Find the user in the database
-        user = UserInfo_collection.find_one({'username': username})
-        if user is None:
-            return jsonify({'message': 'User not found'}), 404
+        # Remove leading and trailing spaces from playlist_name
+        playlist_name = playlist_name.strip()
 
-        # Check if the playlist exists in the user's playlists
-        playlist_to_update = next((playlists for playlists in user.get('playlists', []) if playlists['playlist_name'] == playlist_name), None)
 
-        if playlist_to_update is None:
-            return jsonify({'message': f'Playlist "{playlist_name}" not found for user "{username}"'}), 404
 
-        # Iterate over the tracks and add them to the playlist
+        # Find the playlist in the user's playlists
+        playlist_query = {'username': username, 'playlists.playlist_name': playlist_name}
+        playlist_update = {
+            '$push': {
+                'playlists.$.tracks': {
+                    '$each': []
+                }
+            }
+        }
+
         for track_name in tracks:
             # Search for the track in the Track collection to get its details
             track = Track_collection.find_one({'name': track_name})
@@ -697,42 +704,54 @@ def add_to_playlist():
             }
 
             # Check if the track is already in the playlist
-            existing_entry = next((entry for entry in playlist_to_update['tracks'] if entry['song'] == track_attributes['song'] and entry['artist'] == track_attributes['artist']), None)
-
-            if existing_entry:
+            if any(entry['song'] == track_attributes['song'] and entry['artist'] == track_attributes['artist'] for entry in playlist_update['$push']['playlists.$.tracks']['$each']):
                 return jsonify({'message': f'Track "{track_attributes["song"]}" by "{track_attributes["artist"]}" already in the playlist'}), 400
 
-            # Add the new track entry to the playlist
-            playlist_to_update['tracks'].append(track_attributes)
+            # Add the new track entry to the playlist_update
+            playlist_update['$push']['playlists.$.tracks']['$each'].append(track_attributes)
 
         # Update the playlist in the user's playlists array
-        UserInfo_collection.update_one(
-            {'username': username, 'playlists.playlist_name': playlist_name},
-            {'$set': {'playlists.$': playlist_to_update}}
-        )
+        result = UserInfo_collection.update_one(playlist_query, playlist_update)
+
+        if result.modified_count == 0:
+            return jsonify({'message': f'Playlist "{playlist_name}" not found for user "{username}"'}), 404
 
         return jsonify({'message': f'Tracks added to playlist "{playlist_name}" successfully'})
 
     except Exception as e:
         return jsonify({'message': f'Error: {str(e)}'}), 500
 
-   
 
-# Endpoint to get all tracks from the database
 @app.route('/get_all_tracks', methods=['GET'])
 def get_all_tracks():
     try:
         # Connect to the database
         client = connect_to_mongo()
         db = client.MusicDB
-        Track_collection = db.Track
+        track_collection = db.Track
 
-        # Retrieve all tracks from the Track collection
-        all_tracks = list(Track_collection.find({}))
+        # Retrieve all tracks from the database
+        all_tracks = track_collection.find({})
 
-        # You can further process the results or format them as needed
-        # For now, let's just return the tracks as JSON
-        return jsonify({'all_tracks': all_tracks})
+        # Convert the cursor to a list
+        tracks_list = list(all_tracks)
+
+        if not tracks_list:
+            return jsonify({'tracks': []})
+
+        # Format the results
+        formatted_tracks = []
+        for track in tracks_list:
+            formatted_track = {
+                'name': track['name'],
+                'artists': track['artists'],
+                'album': track['album'],
+                'popularity': track['popularity'],
+                # Add other attributes as needed
+            }
+            formatted_tracks.append(formatted_track)
+
+        return jsonify({'tracks': formatted_tracks})
 
     except Exception as e:
         return jsonify({'message': f'Error: {str(e)}'}), 500
