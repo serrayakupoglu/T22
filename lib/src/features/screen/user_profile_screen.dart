@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:untitled1/src/features/common_widgets/profile_buttons.dart';
+import 'package:untitled1/src/features/common_widgets/body_text.dart';
+import 'package:untitled1/src/features/common_widgets/common_app_bar.dart';
+import 'package:untitled1/src/features/common_widgets/header_text.dart';
+import 'package:untitled1/src/features/controller/user_controller.dart';
+import 'package:untitled1/src/features/models/user.dart';
 import 'package:untitled1/src/features/service/storage_service.dart';
+
+import '../constants.dart';
 
 class UserProfile extends StatefulWidget {
   const UserProfile({Key? key}) : super(key: key);
@@ -10,74 +16,99 @@ class UserProfile extends StatefulWidget {
 }
 
 class _UserProfileState extends State<UserProfile> {
-  Future<String?>? userData;
+  late Future<User?> userData;
+  late UserController controller;
 
   @override
   void initState() {
     super.initState();
+    controller = UserController(context: context);
     userData = fetchData();
   }
 
-  Future<String?> fetchData() async {
-    String? res = await storageService.readSecureData('username');
-    print(res);
-    return res;
+  Future<User?> fetchData() async {
+    String? username = await storageService.readSecureData('username');
+    if (username != null) {
+      return controller.getUserProfile(username);
+    } else {
+      return null;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white10,
-      body: Column(
+    return Column(
         mainAxisSize: MainAxisSize.max,
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Replace this with user image
-          Icon(Icons.supervised_user_circle, color: Colors.white, size: 128,),
+          FutureBuilder(
+              future: userData,
+              builder: (context, snapshot) {
+                if(snapshot.hasData && snapshot.data != null) {
+                  return Column(
+                    children: [
+                      Container(
+                          margin: const EdgeInsets.only(left: 15, top: 10),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.supervised_user_circle, color: Colors.white, size: 82),
+                              Column(
+                                children: [
+                                  HeaderText(msg: "${snapshot.data!.name} ${snapshot.data!.surname}"),
+                                  BodyText(msg: "@${snapshot.data!.username}")
+                                ],
+                              ),
+                            ],
+                          )
+                      ),
+                      Container(
+                        margin: const EdgeInsets.only(top: 10),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            GestureDetector(
+                              onTap: () {controller.navigateToFollowers(snapshot.data!.followers, snapshot.data!.followings, snapshot.data!.username);},
+                              child: HeaderText(msg: "Followers: ${snapshot.data!.followers.length}"),
+                            ),
+                            GestureDetector(
+                              onTap: () {
+                                controller.navigateToFollowings(snapshot.data!.followings, snapshot.data!.followings, snapshot.data!.username);
+                              },
+                              child: HeaderText(msg: "Followings: ${snapshot.data!.followings.length}"),
+                            )
+                          ],
+                        ),
+                      ),
+                      Container(
+                        margin: const EdgeInsets.only(top: 10),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            GestureDetector(
+                              onTap: () {
+                                controller.navigateToLikedSongsPage(context, snapshot.data!);
+                              },
+                              child: const HeaderText(msg: "My Lists"), // Placeholder for My Lists
+                            ),
+                            GestureDetector(
+                              onTap: () {},
+                              child: const HeaderText(msg: "Analysis"), // Placeholder for Analysis
+                            )
+                          ],
+                        ),
+                      ),
+                    ],
+                  );
+                }
 
-          // Container of name and surname
-          FutureBuilder<String?>(
-            future: userData,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return Center(
-                  child: CircularProgressIndicator(), // Show a circular progress indicator while fetching data
-                );
-              } else if (snapshot.hasData && snapshot.data != null) {
-                return Center(
-                  child: Container(
-                    margin: EdgeInsets.fromLTRB(0, 0, 0, 40),
-                    child: Text(
-                      snapshot.data!,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                      ),
-                    ),
-                  ),
-                );
-              } else {
-                return Center(
-                  child: Container(
-                    margin: EdgeInsets.fromLTRB(0, 0, 0, 40),
-                    child: Text(
-                      'User data unavailable',
-                      style: const TextStyle(
-                        color: Colors.black,
-                        fontSize: 24,
-                      ),
-                    ),
-                  ),
-                );
+                else {
+                  return Container();
+                }
               }
-            },
-          ),
-          ProfileButton(buttonText: "Liked-Songs", onPressed: (){}),
-          ProfileButton(buttonText: "Statistics", onPressed: (){}),
-          ProfileButton(buttonText: "Friends", onPressed: (){}),
+          )
+
         ],
-      ),
-    );
+      );
   }
 }

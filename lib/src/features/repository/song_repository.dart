@@ -7,10 +7,9 @@ class SongRepository {
   Future<http.Response> search(String songName) async {
     final queryParams = {'song_name': songName};
 
-    final songSearchUrl = Uri.parse('$kBaseUrl/search_song_from_db');
+    final songSearchUrl = Uri.parse('$kBaseUrl/search_song');
 
     try {
-      print("kk");
       final response = await http.post(
         songSearchUrl,
         body: {
@@ -23,5 +22,17 @@ class SongRepository {
     }
   }
 
+
+  Future<http.Response> rateSong(String songName, int rating) async {
+    final rateSongUrl = Uri.parse('$kBaseUrl/rate_song');
+    final response = await http.post(
+      rateSongUrl,
+      body: {
+        'song_name': songName,
+        'rating': rating.toString(),
+      },
+    );
+    return response;
+  }
 
 }

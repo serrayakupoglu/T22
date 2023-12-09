@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:untitled1/src/features/common_widgets/body_text.dart';
 import 'package:untitled1/src/features/common_widgets/common_app_bar.dart';
-import 'package:untitled1/src/features/screen/fotgot_pass/forgot_pass_code_screen.dart';
+import 'package:untitled1/src/features/screen/forgot_pass/forgot_pass_code_screen.dart';
 import 'package:untitled1/src/features/service/storage_service.dart';
 
 import '../../common_widgets/header_text.dart';

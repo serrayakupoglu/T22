@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-const String kBaseUrl = "http://192.168.1.24:105";
+const String kBaseUrl = "http://192.168.2.184:105";
 const String kIconPath = 'lib/src/assets/my_icon.png';
 const String kFontMetrisch = "Metrisch";
 const double kHeaderMsgSize = 24;
@@ -78,3 +78,26 @@ const String kForgotPassBodyText = "Please enter you e-mail to change your passw
 const String kForgotPassButtonText = "Send";
 const String kForgotPassCodeHeaderText = "Verification Code";
 const int kForgotPassBG = 0xFF131316;
+
+// Search Song
+const String kSearchSongAppBarText = "Search";
+const int kIconColor = 0xFF686C7E;
+const double kSearchBoxWidth = 343;
+const double kSearchBoxHeight = 34;
+const double kSearchBoxIconSize = 16;
+const Color kSearchSongNameColor = Colors.white;
+const int kSearchBoxColor = 0xFF323232;
+const int kSearchBoxArtistColor = 0xFF27B053;
+const double kSearchBoxArtistTextSize = 11;
+const double kSearchBoxMarginBetweenText = 5;
+const double kSearchBoxPadding = 13;
+const int kSearchBoxMoreIconColor = 0xFFE4E4E4;
+
+
+// Profile Page
+const String kFollowersAppBarText = "Followers";
+const String kFollowingsAppBarText = "Followings";
+const String kProfileAppBarText = "Profile";
+
+// Home Page
+const String kHomeAppBarText = "Home Page";

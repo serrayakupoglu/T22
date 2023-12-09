@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:untitled1/src/features/screen/example_song.dart';
-import 'package:untitled1/src/features/screen/fotgot_pass/forgot_pass_code_screen.dart';
+import 'package:untitled1/src/features/screen/home_screen.dart';
+import 'package:untitled1/src/features/screen/forgot_pass/forgot_pass_code_screen.dart';
+import 'package:untitled1/src/features/screen/home_page.dart';
 import 'package:untitled1/src/features/screen/opening_screen.dart';
+import 'package:untitled1/src/features/screen/search_screen.dart';
+import 'package:untitled1/src/features/screen/user_profile_screen.dart';
 
 
 void main() {
@@ -14,12 +17,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      theme: ThemeData(
-        primaryColor: const Color(0xFF003049), // Custom primary color
-        fontFamily: 'Montserrat',        // Custom font
-      ),
-      home:SongScreen(),
-
+      home: HomePage(),
     );
   }
 }

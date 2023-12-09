@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:untitled1/src/features/screen/fotgot_pass/forgot_pass_screen_first.dart';
+import 'package:untitled1/src/features/screen/forgot_pass/forgot_pass_screen_first.dart';
 import 'package:untitled1/src/features/screen/user_profile_screen.dart';
 import 'package:untitled1/src/features/service/storage_service.dart';
+import '../screen/home_page.dart';
 import '../service/sing_in_service.dart';
 
 class SignInScreenController {
@@ -65,7 +66,7 @@ class SignInScreenController {
 
   void _navigateToMainPage() {
     Navigator.of(context).push(MaterialPageRoute(builder: (context) {
-      return UserProfile();
+      return HomePage();
     }));
   }
 
