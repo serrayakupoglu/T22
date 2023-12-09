@@ -1,5 +1,5 @@
 from flask import Flask, jsonify, request, session
-
+from datetime import timedelta
 import certifi
 import requests
 import json 
@@ -12,11 +12,20 @@ import string
 app = Flask(__name__)
 app.secret_key = 'ygmr2002'
 
+app.config['SECRET_KEY'] = 'ygmr2002'
+app.config['SESSION_PERMANENT'] = True
+app.config['SESSION_TYPE'] = 'filesystem'
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)  # Set as needed
+app.config['SESSION_TYPE'] = 'redis'
+app.config['SESSION_PERMANENT'] = True
+app.config['SESSION_USE_SIGNER'] = True
 
 # Dictionary to track logged-in users
 logged_in_users = {}
 
-
+@app.teardown_request
+def teardown_request(exception=None):
+    session.pop('username', None)
 
 
 
@@ -149,27 +158,36 @@ def check(username):
 
 @app.route('/login', methods=['POST'])
 def login():
-    username = request.form['username']
-    password = request.form['password']
+    try:
+        # Check if the user is already logged in
+        if 'username' in session:
+            return jsonify({'message': 'User is already logged in'}), 200
 
-    if username and password:
-        # Connect to the database
-        client = connect_to_mongo()
-        db = client.MusicDB
-        UserInfo_collection = db.UserInfo
+        username = request.form['username']
+        password = request.form['password']
 
-        # Find the user in the database
-        user = UserInfo_collection.find_one({'username': username})
+        if username and password:
+            # Connect to the database
+            client = connect_to_mongo()
+            db = client.MusicDB
+            UserInfo_collection = db.UserInfo
 
-        # Check if the user exists and the password is correct
-        if user and password == user['userPassword']:
-            # Set the user in the session with a dynamic key
-            session['username'] = username  # Corrected line
-            return jsonify({'message': 'Login successful'})
+            # Find the user in the database
+            user = UserInfo_collection.find_one({'username': username})
+
+            # Check if the user exists and the password is correct
+            if user and password == user['userPassword']:
+                # Set the user in the session with a dynamic key
+                session['username'] = username
+                return jsonify({'message': 'Login successful'})
+            else:
+                return jsonify({'message': 'Invalid username or password'}), 401
         else:
-            return jsonify({'message': 'Invalid username or password'}), 401
-    else:
-        return jsonify({'message': 'Bad Request - Missing credentials'}), 400
+            return jsonify({'message': 'Bad Request - Missing credentials'}), 400
+
+    except Exception as e:
+        return jsonify({'message': f'Error: {str(e)}'}), 500
+
 
 
 def get_user_by_username(username):
@@ -197,8 +215,11 @@ def get_current_user():
 def logout():
     try:
         # Check if the user is logged in
-        username = request.form['username']
-        
+        username = request.form.get('username')
+
+        # Log the received username for testing
+        print(f'Received username: {username}')
+
         # Check if the username in the session matches the one provided in the request
         if 'username' in session and username == session['username']:
             # Clear the user from the session
@@ -208,7 +229,6 @@ def logout():
             return jsonify({'message': 'User not logged in or invalid username'}), 401
     except Exception as e:
         return jsonify({'message': f'Error: {str(e)}'}), 500
-
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
@@ -334,15 +354,12 @@ def add_followings():
     except Exception as e:
         return jsonify({'message': f'Error: {str(e)}'}), 500
     
-
 @app.route('/unfollow', methods=['POST'])
 def unfollow_user():
-    # Check if the user is logged in
-    current_user = get_current_user()
-    if current_user is None:
-        return jsonify({'message': 'User not logged in'}), 401
-
     try:
+        # Get the current user (logged in user)
+        current_user = get_current_user()
+
         # Get the target username from the request body
         target_username = request.form.get('target_username')
 
@@ -355,18 +372,19 @@ def unfollow_user():
         UserInfo_collection = db.UserInfo
 
         # Find the target user in the database
-        target_user = UserInfo_collection.find_one({'username': target_username})
+        target_user = get_user_by_username(target_username)
 
         # Check if the target user exists
         if target_user is None:
             return jsonify({'message': 'Target user not found'}), 404
 
         # Check if the current user is following the target user
-        if current_user['username'] not in target_user['followers']:
+        if current_user and current_user['username'] not in target_user.get('followers', []):
             return jsonify({'message': 'User is not following the target user'}), 400
 
         # Remove the target user from the current user's followings
-        UserInfo_collection.update_one({'username': current_user['username']}, {'$pull': {'following': target_user['username']}})
+        if current_user:
+            UserInfo_collection.update_one({'username': current_user['username']}, {'$pull': {'following': target_user['username']}})
 
         # Remove the current user from the target user's followers
         UserInfo_collection.update_one({'username': target_username}, {'$pull': {'followers': current_user['username']}})
@@ -375,7 +393,6 @@ def unfollow_user():
 
     except Exception as e:
         return jsonify({'message': f'Error: {str(e)}'}), 500
-    
 # Endpoint to add a song and its artist to the likedSongs array
 @app.route('/add_to_liked_songs', methods=['POST'])
 def add_to_liked_songs():
