@@ -24,14 +24,6 @@ app.config['SESSION_USE_SIGNER'] = True
 logged_in_users = set()
 
 
-@app.teardown_request
-def teardown_request(exception=None):
-    session.pop('username', None)
-
-
-
-
-
 # Spotify phase
 ######################################
 def get_spotify_token():
@@ -258,6 +250,9 @@ def logout():
     except Exception as e:
         return jsonify({'message': f'Error: {str(e)}'}), 500
 
+# Initialize an empty dictionary for logged-in users
+logged_in_users = {}
+
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     if request.method == 'POST':
@@ -270,6 +265,7 @@ def signup():
         if password != password2:
             return jsonify({'message': 'Passwords do not match'}), 400
 
+        # Replace this with your MongoDB connection
         client = connect_to_mongo()
         db = client.MusicDB
         UserInfo_collection = db.UserInfo
@@ -279,7 +275,7 @@ def signup():
         if existing_user:
             return jsonify({'message': 'Username already exists'}), 400
 
-        # Generate a random userID
+        # Generate a random userID (replace this with your user ID generation)
         user_id = generate_random_user_id()
 
         # Insert the new user into the database
@@ -292,7 +288,7 @@ def signup():
             'followers': [],
             'following': [],
             'likedSongs': [],
-            'rated_songs': [] ,
+            'rated_songs': [],
             'playlists': []
         }
         insert_result = UserInfo_collection.insert_one(new_user)
@@ -320,7 +316,7 @@ def add_track_to_db(track_object, client):
     track_collection = db.Track
     # Insert the track data into the 'Track' collection
     insert_result = track_collection.insert_one(track_object)
-    print(insert_result.inserted_id)
+   
 
 
 
@@ -465,8 +461,8 @@ def unfollow_user():
 @app.route('/add_to_liked_songs', methods=['POST'])
 def add_to_liked_songs():
     try:
-        # Get data from the request
-        username = request.form.get('username')
+        # Get the current user from the session
+        username = session.get('username')
         song_name = request.form.get('song_name')
 
         if not username or not song_name:
@@ -610,7 +606,7 @@ def get_followers_endpoint():
 
 # Endpoint to get followees of a user by username
 @app.route('/get_followees', methods=['GET'])
-def get_followees_endpoint():
+def get_followees():
     try:
         # Get the target username from the request parameters
         target_username = request.args.get('username')
@@ -1170,6 +1166,61 @@ def recommend_song():
 
     except Exception as e:
         return jsonify({'message': f'Error: {str(e)}'}), 500
+#FRIENDSHIP ACTIVITY
+############################
+# Connect to the database
+        
+# Function to get the last added liked song from a user's liked songs
+def get_last_liked_song(username):
+    client = connect_to_mongo()
+    db = client.MusicDB
+    UserInfo_collection = db.UserInfo
+    
+    user_document = UserInfo_collection.find_one({'username': username})
+    if user_document:
+        liked_songs = user_document.get('likedSongs', [])
+        if liked_songs:
+            # Assuming the liked songs are ordered by the time they were added
+            return liked_songs[-1]
+    return None
+# Endpoint to get the last added liked song from a friend
+@app.route('/recommend_last_liked_song_from_friend', methods=['GET'])
+def recommend_last_liked_song_from_friend():
+    try:
+        # Get the current user from the session
+        current_user = session.get('username')
+        if not current_user:
+            return jsonify({'message': 'User not logged in'}), 401
+
+        client=connect_to_mongo()
+        db=client.MusicDB
+        UserInfo_collection=db.UserInfo
+        user_document = UserInfo_collection.find_one({'username': current_user})
+        if user_document:
+            following_list= user_document.get('following', [])
+       
+
+        if not following_list:
+            return jsonify({'message': 'User is not following anyone'}), 400
+
+        # Choose one user from the following list
+        friend_username = following_list[0]  
+
+        # Get the last added liked song from the friend's liked songs
+        last_liked_song = get_last_liked_song(friend_username)
+
+        if last_liked_song:
+            track_name = last_liked_song['song']
+            artist_name =last_liked_song['artist']
+           
+
+            return jsonify({'friend': friend_username, 'added': track_name, 'by': artist_name})
+        else:
+            return jsonify({'message': f'No liked songs found for {friend_username}'}), 404
+
+    except Exception as e:
+        return jsonify({'message': f'Error: {str(e)}'}), 500
+
 
 
 # Song fetch api ends....
