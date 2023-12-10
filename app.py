@@ -914,16 +914,18 @@ def decrease_rate(track_name):
 
 
 ##################################### ANALYSİS#############################
-# Endpoint to get overall frequency of genres based on liked and highly rated songs
-@app.route('/get_overall_genre_frequency', methods=['GET'])
-def get_overall_genre_frequency():
+# Endpoint to get the higher-rated genre
+
+@app.route('/get_higher_rated_genre', methods=['GET'])
+def get_higher_rated_genre():
     try:
         # Get the username from the query parameters
         username = request.args.get('username')
 
+
         if not username:
             return jsonify({'message': 'Username is missing in the query parameters'}), 400
-
+        
         # Connect to the database
         client = connect_to_mongo()
         db = client.MusicDB
@@ -934,40 +936,241 @@ def get_overall_genre_frequency():
         user_document = UserInfo_collection.find_one({'username': username})
 
         if user_document:
-            # Extract liked songs
-            liked_songs = user_document.get('likedSongs', [])
-
             # Extract rated songs with all ratings
             rated_songs = user_document.get('rated_songs', [])
-            all_rated_songs = [song.get('song_name') for song in rated_songs if isinstance(song, dict)]
 
-            # Get genres for each artist in liked and rated songs
-            all_genres = []
-            for song_info in liked_songs + all_rated_songs:
-                song_name = song_info.get('song_name')  # Update this based on your actual structure
+            if not rated_songs:
+                return jsonify({'message': 'User has not rated any songs'}), 400
+
+            # Calculate average rating for each genre
+            genre_ratings = {}
+
+            for rated_song in rated_songs:
+                # Ensure there is at least one item in the list
+                if not rated_song:
+                    continue
+
+                # Directly access the dictionary keys and values
+                song_name, rating = next(iter(rated_song.items()))
                 track = Track_collection.find_one({'name': song_name})
 
-                # Check if the track is not None and is a dictionary
-                if isinstance(track, dict):
-                    # Check if 'artists' key exists in the track
-                    if 'artists' in track:
-                        for artist_info in track['artists']:
-                            artist_id = artist_info.get('id')
-                            if artist_id:
-                                artist_genres = get_artist_genres(artist_id)
-                                all_genres.extend(artist_genres)
+                if track and 'artists' in track:
+                    for artist_info in track['artists']:
+                        artist_id = artist_info.get('id')
 
-            # Count occurrences of each genre
-            genre_counts = {}
-            for genre in all_genres:
-                genre_counts[genre] = genre_counts.get(genre, 0) + 1
+                        if artist_id:
+                            artist_genres = get_artist_genres(artist_id)
 
-            return jsonify({'genre_frequency': genre_counts})
+                            for genre in artist_genres:
+                                if genre not in genre_ratings:
+                                    genre_ratings[genre] = {'total_rating': 0, 'count': 0}
+
+                                genre_ratings[genre]['total_rating'] += rating
+                                genre_ratings[genre]['count'] += 1
+
+            # Calculate average rating for each genre
+            average_ratings = {genre: info['total_rating'] / info['count'] for genre, info in genre_ratings.items()}
+
+            # Get the genre with the highest average rating
+            higher_rated_genre = max(average_ratings, key=average_ratings.get)
+
+            return jsonify({'higher_rated_genre': higher_rated_genre, 'average_rating': average_ratings[higher_rated_genre]})
 
         return jsonify({'message': 'User not found'}), 404
 
     except Exception as e:
         return jsonify({'message': f'Error: {str(e)}'}), 500
+
+# Endpoint to get genres and their percentage of rating
+@app.route('/get_genre_percentage', methods=['GET'])
+def get_genre_percentage():
+    try:
+        # Get the username from the body
+        username = request.form.get('username')
+         # Connect to the database
+        client = connect_to_mongo()
+        db = client.MusicDB
+        UserInfo_collection = db.UserInfo
+        Track_collection = db.Track
+
+        if not username:
+            return jsonify({'message': 'Username is missing in the query parameters'}), 400
+
+        # Get the user's document
+        user_document = UserInfo_collection.find_one({'username': username})
+
+        if user_document:
+            # Extract rated songs with all ratings
+            rated_songs = user_document.get('rated_songs', [])
+
+            if not rated_songs:
+                return jsonify({'message': 'User has not rated any songs'}), 400
+
+            # Calculate total rating and rating count for each genre
+            genre_ratings = {}
+
+            for rated_song in rated_songs:
+                # Ensure there is at least one item in the list
+                if not rated_song:
+                    continue
+
+                # Directly access the dictionary keys and values
+                song_name, rating = next(iter(rated_song.items()))
+                track = Track_collection.find_one({'name': song_name})
+
+                if track and 'artists' in track:
+                    for artist_info in track['artists']:
+                        artist_id = artist_info.get('id')
+
+                        if artist_id:
+                            artist_genres = get_artist_genres(artist_id)
+
+                            for genre in artist_genres:
+                                if genre not in genre_ratings:
+                                    genre_ratings[genre] = {'total_rating': 0, 'count': 0}
+
+                                genre_ratings[genre]['total_rating'] += rating
+                                genre_ratings[genre]['count'] += 1
+
+            # Calculate percentage rating for each genre
+             # Calculate percentage rating for each genre
+            genre_percentage = {genre: (info['count'] / info['total_rating']) * 100 for genre, info in genre_ratings.items()}
+            
+            return jsonify({'genre_percentage': genre_percentage})
+
+        return jsonify({'message': 'User not found'}), 404
+
+    except Exception as e:
+        return jsonify({'message': f'Error: {str(e)}'}), 500
+    
+
+
+
+@app.route('/get_average_release_year', methods=['GET'])
+def get_average_release_year():
+    try:
+        # Get the username from the query parameters
+        username = request.args.get('username')
+
+        if not username:
+            return jsonify({'message': 'Username is missing in the query parameters'}), 400
+
+        # Get the user's document
+         # Connect to the database
+        client = connect_to_mongo()
+        db = client.MusicDB
+        UserInfo_collection = db.UserInfo
+        Track_collection = db.Track
+
+        user_document = UserInfo_collection.find_one({'username': username})
+
+        if user_document:
+            # Extract liked songs with all details
+            liked_songs = user_document.get('likedSongs', [])
+
+            if not liked_songs:
+                return jsonify({'message': 'User has not liked any songs'}), 400
+
+            total_release_year = 0
+            total_songs = 0
+
+            for liked_song in liked_songs:
+                # Ensure there is at least one item in the list
+                if not liked_song:
+                    continue
+
+                # Directly access the dictionary keys and values
+                song_name = liked_song.get('song')
+                track = Track_collection.find_one({'name': song_name})
+
+                if track and 'album' in track and 'release_date' in track['album']:
+                    release_year = int(track['album']['release_date'][:4])  # Extract the release year
+                    total_release_year += release_year
+                    total_songs += 1
+
+            if total_songs > 0:
+                average_release_year = total_release_year / total_songs
+                return jsonify({'most liked average year': round(average_release_year)})
+            else:
+                return jsonify({'message': 'No valid release years found for liked songs'}), 400
+
+        return jsonify({'message': 'User not found'}), 404
+
+    except Exception as e:
+        return jsonify({'message': f'Error: {str(e)}'}), 500
+    
+##RECCOMENDATION
+
+# Endpoint to recommend a song based on the genre of the highest-rated song
+@app.route('/recommend_song', methods=['GET'])
+def recommend_song():
+    try:
+         # Get the current user from the session
+        username = session.get('username')
+        if not username:
+            return jsonify({'message': 'User is not logged in'}), 400
+        # Connect to the database
+        client = connect_to_mongo()
+        db = client.MusicDB
+        UserInfo_collection = db.UserInfo
+        Track_collection = db.Track
+
+        # Get the user's document
+        user_document = UserInfo_collection.find_one({'username': username})
+
+        if user_document:
+            # Extract rated songs with all ratings
+            rated_songs = user_document.get('rated_songs', [])
+
+            if not rated_songs:
+                return jsonify({'message': 'User has not rated any songs'}), 400
+
+            # Calculate average rating for each genre
+            genre_ratings = {}
+
+            for rated_song in rated_songs:
+                # Ensure there is at least one item in the list
+                if not rated_song:
+                    continue
+
+                # Directly access the dictionary keys and values
+                song_name, rating = next(iter(rated_song.items()))
+                track = Track_collection.find_one({'name': song_name})
+
+                if track and 'artists' in track:
+                    for artist_info in track['artists']:
+                        artist_id = artist_info.get('id')
+
+                        if artist_id:
+                            artist_genres = get_artist_genres(artist_id)
+
+                            for genre in artist_genres:
+                                if genre not in genre_ratings:
+                                    genre_ratings[genre] = {'total_rating': 0, 'count': 0}
+
+                                genre_ratings[genre]['total_rating'] += rating
+                                genre_ratings[genre]['count'] += 1
+
+            # Calculate average rating for each genre
+            average_ratings = {genre: info['total_rating'] / info['count'] for genre, info in genre_ratings.items()}
+            # Get the genre with the highest average rating
+            higher_rated_genre = max(average_ratings, key=average_ratings.get)
+            # Find a recommended song of the same genre not in the user's database
+            recommended_song = Track_collection.find_one({
+            'artists.genres': {'$in': [higher_rated_genre]},
+            'name': {'$nin': [song.get('song') for song in user_document.get('likedSongs', [])]}
+                })
+
+            if recommended_song:
+                return jsonify({'recommended_song': recommended_song['name'], 'genre': higher_rated_genre})
+            else:
+                return jsonify({'message': f'No recommended song found for the genre "{higher_rated_genre}"'}), 404
+
+        return jsonify({'message': 'User not found'}), 404
+
+    except Exception as e:
+        return jsonify({'message': f'Error: {str(e)}'}), 500
+
 
 # Song fetch api ends....
 ######################################
