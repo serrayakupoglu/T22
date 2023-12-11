@@ -53,7 +53,7 @@ The API will be accessible at http://localhost:105.
 ## API Endpoints
 User Authentication:
 
-/register (POST): Register a new user.
+/signup (POST): Register a new user.
 /login (POST): Log in an existing user.
 /logout (GET): Log out the current user.
 Song Analysis:
