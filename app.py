@@ -914,23 +914,22 @@ def extract_track_info(text):
             extracted_data = [
                 {
                     "album": {
-                "id": track['album']['id'],
-                "name": track['album']['name'],
-                "release_date": track['album']['release_date']
-            },
-            "artists": [
-            {
-                "id": artist['id'],
-                "name": artist['name'],
-                "genres": get_artist_genres(artist['id'])
-            }
-            for artist in track['artists']
-                 
-            ],
-            "duration_ms": track['duration_ms'],
-            "id": track['id'],
-            "name": track['name'],
-            "popularity": track['popularity']
+                        "id": track['album']['id'],
+                        "name": track['album']['name'],
+                        "release_date": track['album']['release_date']
+                    },
+                    "artists": [
+                        {
+                            "id": artist['id'],
+                            "name": artist['name'],
+                            "genres": []  # Omitting genres for simplicity
+                        }
+                        for artist in track['artists']
+                    ],
+                    "duration_ms": track['duration_ms'],
+                    "id": track['id'],
+                    "name": track['name'],
+                    "popularity": track['popularity']
                 }
                 for track in tracks
             ]
@@ -953,9 +952,56 @@ def process_text_file():
     try:
         text_content = file.read().decode('utf-8')
         extracted_data = extract_track_info(text_content)
-        return jsonify({"extracted_data": extracted_data})
+
+        # Connect to MongoDB
+        client = connect_to_mongo()
+
+        # Example: Insert tracks into MongoDB
+        db = client.MusicDB
+        track_collection = db.Track
+        inserted_data = track_collection.insert_many(extracted_data)
+
+        return jsonify({"inserted_data": str(inserted_data.inserted_ids)})
     except Exception as e:
         return jsonify({"error": f"An error occurred: {str(e)}"})
+
+
+@app.route('/add_track_man', methods=['POST'])
+def add_track():
+    try:
+        # Collect form data
+        track_data = {
+            "album": {
+                "id": request.form.get('album_id'),
+                "name": request.form.get('album_name'),
+                "release_date": request.form.get('release_date')
+            },
+            "artists": [
+                {
+                    "id": request.form.get('artist_id'),
+                    "name": request.form.get('artist_name'),
+                    "genres": []  # Omitting genres for simplicity
+                }
+                for _ in range(int(request.form.get('num_artists', 0)))  # Default to 0 if 'num_artists' is not present
+            ],
+            "duration_ms": int(request.form.get('duration_ms', 0)),  # Default to 0 if 'duration_ms' is not present
+            "id": request.form.get('track_id'),
+            "name": request.form.get('track_name'),
+            "popularity": int(request.form.get('popularity', 0))  # Default to 0 if 'popularity' is not present
+        }
+
+        # Connect to MongoDB
+        client = connect_to_mongo()
+
+        # Insert track into MongoDB
+        db = client.MusicDB
+        track_collection = db.Track
+        insert_result = track_collection.insert_one(track_data)
+
+        return jsonify({"message": "Track added successfully", "track_id": str(insert_result.inserted_id)})
+    except Exception as e:
+        return jsonify({"error": f"An error occurred: {str(e)}"})
+
 
 
 ##################################### ANALYSİS#############################
