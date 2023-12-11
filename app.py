@@ -16,7 +16,7 @@ app.secret_key = secrets.token_hex(16)
 app.config['SECRET_KEY'] = 'ygmr2002'
 app.config['SESSION_PERMANENT'] = True
 
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)  # Set as needed
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)  
 app.config['SESSION_TYPE'] = 'redis'
 app.config['SESSION_PERMANENT'] = True
 app.config['SESSION_USE_SIGNER'] = True
@@ -906,7 +906,56 @@ def decrease_rate(track_name):
 
 ######################################
 
+def extract_track_info(text):
+    try:
+        data = json.loads(text)
+        if 'tracks' in data:
+            tracks = data['tracks']
+            extracted_data = [
+                {
+                    "album": {
+                "id": track['album']['id'],
+                "name": track['album']['name'],
+                "release_date": track['album']['release_date']
+            },
+            "artists": [
+            {
+                "id": artist['id'],
+                "name": artist['name'],
+                "genres": get_artist_genres(artist['id'])
+            }
+            for artist in track['artists']
+                 
+            ],
+            "duration_ms": track['duration_ms'],
+            "id": track['id'],
+            "name": track['name'],
+            "popularity": track['popularity']
+                }
+                for track in tracks
+            ]
+            return extracted_data
+        else:
+            return {"error": "Invalid JSON structure. 'tracks' key not found."}
+    except json.JSONDecodeError:
+        return {"error": "Invalid JSON format."}
 
+@app.route('/extract_track_info', methods=['POST'])
+def process_text_file():
+    if 'file' not in request.files:
+        return jsonify({"error": "No file part"})
+    
+    file = request.files['file']
+
+    if file.filename == '':
+        return jsonify({"error": "No selected file"})
+
+    try:
+        text_content = file.read().decode('utf-8')
+        extracted_data = extract_track_info(text_content)
+        return jsonify({"extracted_data": extracted_data})
+    except Exception as e:
+        return jsonify({"error": f"An error occurred: {str(e)}"})
 
 
 ##################################### ANALYSİS#############################
