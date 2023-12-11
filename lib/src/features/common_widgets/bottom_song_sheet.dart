@@ -5,7 +5,10 @@ import 'package:untitled1/src/features/models/song.dart';
 class BottomSongSheet extends StatefulWidget {
 
   final Song song;
-  const BottomSongSheet({super.key, required this.song});
+  final VoidCallback? likeSongFunction;
+  const BottomSongSheet({super.key, required this.song, this.likeSongFunction});
+
+
 
   @override
   State<StatefulWidget> createState() => _BottomSongSheetState();
@@ -31,7 +34,7 @@ class _BottomSongSheetState extends State<BottomSongSheet>{
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               IconButton(
-                  onPressed: (){},
+                  onPressed: widget.likeSongFunction,
                   icon: Icon(Icons.add),
               ),
               IconButton(
@@ -39,7 +42,7 @@ class _BottomSongSheetState extends State<BottomSongSheet>{
                     showDialog(
                       context: context,
                       builder: (BuildContext context) {
-                        return RatingDialog(song: widget.song); // Pass the song object to the rating dialog
+                        return RatingDialog(song: widget.song);
                       },
                     );
                   },

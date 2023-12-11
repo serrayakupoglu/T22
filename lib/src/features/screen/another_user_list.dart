@@ -19,7 +19,7 @@ class _OthersLikedSongsPageState extends State<OthersLikedSongsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(kOpeningBG),
-      appBar: const CommonAppBar(appBarText: 'Liked Songs'),
+      appBar: const CommonAppBar(appBarText: 'Liked Songs', canGoBack: true),
       body: ListView.builder(
         itemCount: widget.user.likedSongs.length,
         itemBuilder: (context, index) {

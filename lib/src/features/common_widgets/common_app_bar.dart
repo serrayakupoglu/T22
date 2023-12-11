@@ -2,14 +2,15 @@ import 'package:flutter/material.dart';
 import '../constants.dart';
 
 class CommonAppBar extends StatelessWidget implements PreferredSizeWidget{
-
   final String appBarText;
+  final bool canGoBack;
 
-  const CommonAppBar({super.key, required this.appBarText});
+  const CommonAppBar({super.key, required this.appBarText, required this.canGoBack});
 
   @override
   Widget build(BuildContext context) {
     return AppBar(
+      automaticallyImplyLeading: canGoBack,
       centerTitle: true,
       backgroundColor: const Color(kAppBarColor),
       title: Text(

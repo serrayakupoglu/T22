@@ -1,11 +1,13 @@
 import 'package:http/http.dart' as http;
 import 'package:untitled1/src/features/constants.dart';
+import 'package:untitled1/src/features/service/storage_service.dart';
+
+import '../models/song_input.dart';
 
 class SongRepository {
 
 
   Future<http.Response> search(String songName) async {
-    final queryParams = {'song_name': songName};
 
     final songSearchUrl = Uri.parse('$kBaseUrl/search_song');
 
@@ -24,15 +26,53 @@ class SongRepository {
 
 
   Future<http.Response> rateSong(String songName, int rating) async {
-    final rateSongUrl = Uri.parse('$kBaseUrl/rate_song');
-    final response = await http.post(
-      rateSongUrl,
-      body: {
-        'song_name': songName,
-        'rating': rating.toString(),
-      },
+
+      final rateSongUrl = Uri.parse('$kBaseUrl/rate_song');
+      final session = await storageService.readSecureData('session');
+
+      print(session);
+      print(rating);
+
+      try {
+        final response = await http.post(
+          rateSongUrl,
+          headers: {
+            'Authorization': 'Bearer $session',
+            'cookie': 'session=$session'
+          },
+          body: {
+            'song_name' : songName,
+            'rating' : rating.toString()
+          },
+        );
+        print(response.body);
+        return response;
+      } catch(e) {
+        print(e);
+        throw Future.error(e);
+      }
+  }
+
+  Future<http.Response> addSongManually(SongData songData) async {
+    final url = Uri.parse('$kBaseUrl/add_track_man');
+
+    final response = http.post(
+        url,
+        body: {
+          'album_id': songData.album['id'],
+          'album_name': songData.album['name'],
+          'release_date': songData.album['release_date'],
+          'artist_id': songData.artists[0]['id'],
+          'artist_name': songData.artists[0]['name'],
+          'num_artists': songData.artists.length.toString(), // Example for handling multiple artists
+          'duration_ms': songData.durationMs.toString(),
+          'track_id': songData.id,
+          'track_name': songData.name,
+          'popularity': songData.popularity.toString(),
+        }
     );
     return response;
+
   }
 
 }

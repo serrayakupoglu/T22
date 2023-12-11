@@ -23,7 +23,7 @@ class _ForgotPassCodeState extends State<ForgotPassCode> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(kForgotPassBG),
-      appBar: const CommonAppBar(appBarText: kForgotPassAppBarText),
+      appBar: const CommonAppBar(appBarText: kForgotPassAppBarText, canGoBack: true),
       body: Container(
           margin: const EdgeInsets.all(kSignInPageSideMargin),
           child: Column(

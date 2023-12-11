@@ -6,6 +6,7 @@ import 'package:untitled1/src/features/controller/user_controller.dart';
 import 'package:untitled1/src/features/models/user.dart';
 import 'package:untitled1/src/features/service/storage_service.dart';
 
+import '../common_widgets/profile_buttons.dart';
 import '../constants.dart';
 
 class UserProfile extends StatefulWidget {
@@ -92,13 +93,17 @@ class _UserProfileState extends State<UserProfile> {
                               child: const HeaderText(msg: "My Lists"), // Placeholder for My Lists
                             ),
                             GestureDetector(
-                              onTap: () {},
+                              onTap: () {
+                                controller.navigateToAnalysis(snapshot.data!.username);
+                              },
                               child: const HeaderText(msg: "Analysis"), // Placeholder for Analysis
                             )
                           ],
                         ),
                       ),
+                      Container(margin: EdgeInsets.only(top: 300),child: ProfileButton(buttonText: "Logout", onPressed: () {controller.logout(snapshot.data!.username);}),)
                     ],
+
                   );
                 }
 

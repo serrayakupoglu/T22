@@ -37,7 +37,7 @@ class _FollowersPageState extends State<FollowersPage> {
     bool isCurrentlyFollowing = isFollowing(username);
 
     if (isCurrentlyFollowing) {
-      _userController.unfollowUser(widget.currentUserName, username).then((dbResult) {
+      _userController.unfollowUser(username).then((dbResult) {
         if (dbResult == true) {
           setState(() {
             _currentFollowings.remove(username);
@@ -47,7 +47,7 @@ class _FollowersPageState extends State<FollowersPage> {
         }
       });
     } else {
-      _userController.followUser(widget.currentUserName, username).then((dbResult) {
+      _userController.followUser(username).then((dbResult) {
         if (dbResult == true) {
           setState(() {
             _currentFollowings.add(username);
@@ -62,7 +62,7 @@ class _FollowersPageState extends State<FollowersPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const CommonAppBar(appBarText: kFollowersAppBarText),
+      appBar: const CommonAppBar(appBarText: kFollowersAppBarText, canGoBack: true,),
       backgroundColor: const Color(kOpeningBG),
       body: ListView.builder(
         itemCount: _currentFollowers.length,

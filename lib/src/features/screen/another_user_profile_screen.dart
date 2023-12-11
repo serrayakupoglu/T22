@@ -38,7 +38,7 @@ class _AnotherUserProfileState extends State<AnotherUserProfile> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const CommonAppBar(appBarText: "Profile"),
+      appBar: const CommonAppBar(appBarText: "Profile", canGoBack: true),
       backgroundColor: const Color(kOpeningBG),
       body: Column(
         mainAxisSize: MainAxisSize.max,
@@ -97,7 +97,9 @@ class _AnotherUserProfileState extends State<AnotherUserProfile> {
                             child: HeaderText(msg: "Lists"), // Placeholder for My Lists
                           ),
                           GestureDetector(
-                            onTap: () {},
+                            onTap: () {
+                              controller.navigateToAnalysis(widget.username);
+                            },
                             child: HeaderText(msg: "Analysis"), // Placeholder for Analysis
                           )
                         ],

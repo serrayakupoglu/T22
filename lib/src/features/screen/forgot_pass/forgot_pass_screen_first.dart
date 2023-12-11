@@ -23,7 +23,7 @@ class _ForgotPassState extends State<ForgotPass> {
     final TextEditingController emailController = TextEditingController();
     return Scaffold(
       backgroundColor: const Color(kForgotPassBG),
-      appBar: const CommonAppBar(appBarText: kForgotPassAppBarText),
+      appBar: const CommonAppBar(appBarText: kForgotPassAppBarText, canGoBack: true),
       body: Container(
           margin: const EdgeInsets.all(kSignInPageSideMargin),
           child: ListView(

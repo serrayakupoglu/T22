@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../constants.dart';
 import '../models/user.dart';
+import '../service/storage_service.dart';
 
 
 class UserRepository {
@@ -11,7 +12,6 @@ class UserRepository {
     final url = Uri.parse('$kBaseUrl/get_profile').replace(queryParameters: queryParams);
 
     final response = await http.get(url);
-    print(response.body);
     print("Response");
     if (response.statusCode == 200) {
       // Parse the JSON response and create a User object
@@ -25,10 +25,15 @@ class UserRepository {
     }
   }
 
-  Future<http.Response> followUser(String currentUsername, String targetUsername) async {
+  Future<http.Response> followUser(String targetUsername) async {
     final url = Uri.parse('$kBaseUrl/add_followings');
+    final session = await storageService.readSecureData('session');
     final response = await http.post(
       url,
+      headers: {
+        'Authorization': 'Bearer $session',
+        'cookie': 'session=$session'
+      },
       body: {
         'target_username': targetUsername,
       },
@@ -38,15 +43,104 @@ class UserRepository {
   }
 
 
-  Future<http.Response> unfollowUser(String currentUsername, String targetUsername) async {
+  Future<http.Response> unfollowUser(String targetUsername) async {
     final url = Uri.parse('$kBaseUrl/unfollow');
-
+    final session = await storageService.readSecureData('session');
     final response = await http.post(
       url,
+      headers: {
+        'Authorization': 'Bearer $session',
+        'cookie': 'session=$session'
+      },
       body: {
         'target_username': targetUsername,
       },
     );
     return response;
   }
+
+  Future<http.Response> logout(String username) async {
+
+    final url = Uri.parse('$kBaseUrl/logout');
+    final session = await storageService.readSecureData('session');
+    final response = await http.post(
+      url,
+      headers: {
+        'Authorization': 'Bearer $session',
+        'cookie': 'session=$session',
+      },
+      body: {
+        'username': username,
+      }
+    );
+    return response;
+  }
+
+  Future<http.Response> addSongToLikedList (String username, String songName) async {
+    final url = Uri.parse('$kBaseUrl/add_to_liked_songs');
+    final session = await storageService.readSecureData('session');
+    print(songName);
+    final response = await http.post(
+      url,
+      headers: {
+        'Authorization': 'Bearer $session',
+        'cookie': 'session=$session',
+      },
+      body: {
+        'song_name': songName
+      }
+    );
+    return response;
+  }
+
+  Future<http.Response> searchUser(String username) async {
+    final url = Uri.parse('$kBaseUrl/search_user');
+    print(username);
+    final response = await http.post(
+      url,
+      body: {
+        'username': username,
+      }
+    );
+    return response;
+  }
+
+  Future<http.Response> getMostLikedGenre(String username) async {
+    final queryParams = {'username': username};
+    final url = Uri.parse('$kBaseUrl/get_higher_rated_genre').replace(queryParameters: queryParams);
+    final response = await http.get(url);
+    return response;
+  }
+
+  Future<http.Response> getMostLikedYear(String username) async {
+    final queryParams = {'username': username};
+    final url = Uri.parse('$kBaseUrl/get_average_release_year').replace(queryParameters: queryParams);
+    final response = await http.get(url);
+    return response;
+  }
+
+  Future<http.Response> recommendSong() async {
+    final url = Uri.parse('$kBaseUrl/recommend_song');
+    final session = await storageService.readSecureData('session');
+    final response = await http.get(
+        url,
+        headers: {
+          'Authorization': 'Bearer $session',
+          'cookie': 'session=$session',
+        });
+    return response;
+  }
+
+  Future<http.Response> recommendSongFromFriends() async {
+    final url = Uri.parse('$kBaseUrl/recommend_last_liked_song_from_friend');
+    final session = await storageService.readSecureData('session');
+    final response = await http.get(
+        url,
+        headers: {
+          'Authorization': 'Bearer $session',
+          'cookie': 'session=$session',
+        });
+    return response;
+  }
+
 }

@@ -29,7 +29,7 @@ class _LoginPageState extends State<LoginPage> {
     return Scaffold(
       backgroundColor: const Color(kSignInPageBG),
       resizeToAvoidBottomInset: false,
-      appBar: const CommonAppBar(appBarText: kAppBarText),
+      appBar: const CommonAppBar(appBarText: kAppBarText, canGoBack: true),
       body: Column(
         mainAxisSize: MainAxisSize.max,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -51,10 +51,7 @@ class _LoginPageState extends State<LoginPage> {
                 Padding(padding: const EdgeInsets.only(bottom: kSignInPageSideMargin),
                     child: InputBox(innerText: kSignInPagePasswordInputText, controller: passwordController, isObscure: true)
                 ),
-                Padding(padding: const EdgeInsets.only(bottom: kSignInPageSideMargin),
-                    child: ErrorText(msg: "ErrorMsg", clr: errorTextColor)
-                ),
-                Text("Kemal", style: TextStyle(color: isError ? Colors.red : Colors.white),),
+
                 Container(
                   alignment: Alignment.centerRight,
                   child: RichText(

@@ -27,7 +27,7 @@ class _SignupPageState extends State<SignupPage> {
     return Scaffold(
       backgroundColor: const Color(kSignUpPageBG),
       resizeToAvoidBottomInset: false,
-      appBar: const CommonAppBar(appBarText: kSignUpAppBarText),
+      appBar: const CommonAppBar(appBarText: kSignUpAppBarText, canGoBack: true),
 
       body: Container(
         margin: const EdgeInsets.all(kSignInPageSideMargin),
@@ -49,10 +49,7 @@ class _SignupPageState extends State<SignupPage> {
               padding: const EdgeInsets.only(bottom: kSignInPageSideMargin*1.2),
               child: InputBox(controller: surnameController,innerText: kSignUpSurnameText, isObscure: false),
             ),
-            Padding (
-              padding: const EdgeInsets.only(bottom: kSignInPageSideMargin*1.2),
-              child: InputBox(controller: emailController,innerText: kSignUpEmailText, isObscure: false),
-            ),
+
             Padding (
               padding: const EdgeInsets.only(bottom: kSignInPageSideMargin*1.2),
               child: InputBox(controller: userNameController,innerText: kSignUpUsernameText, isObscure: false),

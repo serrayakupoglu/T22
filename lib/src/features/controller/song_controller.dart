@@ -4,6 +4,7 @@ import 'package:untitled1/src/features/screen/user_profile_screen.dart';
 import 'package:untitled1/src/features/service/song_service.dart';
 import 'package:untitled1/src/features/service/storage_service.dart';
 import '../models/song.dart';
+import '../models/song_input.dart';
 import '../service/sing_in_service.dart';
 
 class SongController {
@@ -19,6 +20,11 @@ class SongController {
 
   Future<bool> rateSong(String songName, int rating) async {
     return await _service.rateSong(songName, rating);
+  }
+
+  Future<bool> addSongManually(SongData songData) async {
+    final response = await _service.addSongManually(songData);
+    return response;
   }
 
 }
