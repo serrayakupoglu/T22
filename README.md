@@ -51,82 +51,82 @@ This project is a system that gathers users' data of liked songs and then the pr
 ## Development Artifacts
 - **Backlog in Gherkin format:**
   
-  Feature: User Authentication
+-  Feature: User Authentication
   As a registered user
   I want to log in
   So that I can access my personalized content
 
-Scenario: Successful Login
+1. Scenario: Successful Login
   Given the user is on the login page
   When the user enters valid credentials
   Then the user should be logged in successfully
 
-Scenario: Invalid Credentials
+2. Scenario: Invalid Credentials
   Given the user is on the login page
   When the user enters invalid credentials
   Then an error message should be displayed
   And the user should remain on the login page
   
-  Feature: Rating songs 
+  - Feature: Rating songs 
   As a user
   I want to rate songs i like
   So that my preferances can be analyized
   
-  Scenario: Successful rating
+ 1.  Scenario: Successful rating
       Given the user picks and rates a song 
       When the rate is between 1-10, song is in the database and song is not already rated
       Then user will be able to rate the song succesfully
-  Scenario: Unsuccessful rating
+ 2.  Scenario: Unsuccessful rating
       Given the user pick and rates a song 
       When the rate is not 1-10, song is not in database or the song is already rated 
       Then user will get an error message 
       
-  Feature: Song analysis 
+ -  Feature: Song analysis 
   As a user 
   I want to get my music preferance analysis
   So that i have my statistical data
-  Scenerio: Analysis based on genre
+ 1.  Scenerio: Analysis based on genre
       Given the user requested analysis
       When there are songs that the user has rated 
       Then the user will get preferance analysis based on the genre of the songs
-  Scenerio: Analysis based on year 
+  2. Scenerio: Analysis based on year 
       Given the user requested analysis
       When there aren't songs that the user has rated but there are liked songs 
       Then the user will get preferance analysis based on the relase date of the songs
- Feature: Adding songs manually
+-  Feature: Adding songs manually
  As a user
  I want to add songs to the system 
  So that i can rate any song i like
-Scenario: Successfull add
+1. Scenario: Successfull add
     Given the user requesting to add a song to the database
     When the format is in json in the txt file 
     Then the user will be able to add song
-Scenario: Unsuccessfull add 
+2. Scenario: Unsuccessfull add 
     Given the user requesting to add a song in the database
     When the format is not in json form 
     Then user will not be able to add the song
-Feature: Follow/Unfollow other users
+- Feature: Follow/Unfollow other users
 As a user
 I want to follow/unfollow other users
 So that i can connect with friends
-Scenario: Successfull follow/unfollow
+1. Scenario: Successfull follow/unfollow
     Given the user followed/unfollowed other users
     When the target user is found and they are not already followed/unfollowed
     Then user can follow/unfollow them
-Scenario: Unssuccessfull follow/unfollow
+2. Scenario: Unssuccessfull follow/unfollow
     Given the user followed/unfollowed other users
     When the target user is not found and they are already followed/unfollowed
     Then user can not follow/unfollow them
-Feature: Recommedation 
+- Feature: Recommedation 
 As a user 
 I want the system to recommend songs to me
 So that i can have new songs to listen to 
-Scenario: Song recommended
+1. Scenario: Song recommended
     Given the user asked for recommendations
     When there is enough data on users prefarence
     Then system will recommend songs
 
-Scenario: Unable to recommend songs
+2. Scenario: Unable to recommend songs
     Given the user asked for recommendations
     When there is not enough data on users prefarence
     Then system can not recommend songs
