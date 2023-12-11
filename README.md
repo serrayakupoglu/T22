@@ -157,7 +157,7 @@ Jira, Python, MongoDB, Reactjs, Flutter, Android studio, Postman
 
 ## Authors
 1. Backend group: Yagmur Dolunay, Ata Egemen Gurel
-2. Web group: Ezgi Duman, Berke Kayhan
+2. Web group: Ezgi Duman
 3. Mobile app group: Kemal Ayhan, Bahri Baran Coskun
 4. Team Leader: Serra Yakupoglu   
 
