@@ -1,0 +1,96 @@
+.button {
+  background-color: rgb(43, 73, 195) 93, 16; 
+  color: white; /* Beyaz metin */
+  border: none;
+  padding: 8px 15px;
+  margin: 5px 0;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
+}
+
+.button:hover {
+  background-color: #45a049; 
+  transform: translateY(-2px); 
+}
+
+.profileContainer {
+  background-color: #1a1a1a;
+  height: 100vh;
+  color: #f0f0f0;
+  overflow-x: auto;
+}
+
+.profileBox {
+  background-color: #000000;
+  padding: 16px;
+  border-radius: 8px;
+  width: 60%; 
+  margin: auto; 
+}
+
+.profileBox h2 {
+  margin-bottom: 16px;
+}
+
+.profileDetails h4 {
+  margin-bottom: 8px;
+}
+
+.userConnections {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.followers-info, .following-info {
+  width: 45%; 
+  text-align: center;
+}
+
+.logo {
+  width: 22.5% !important;
+  height: auto !important;
+}
+
+
+.hr {
+  border-top: 1px solid #ccc; 
+  margin: 20px 0; 
+}
+
+.modal {
+  position: fixed; 
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6); 
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modalContent {
+  background-color: #1a1a1a;
+  padding: 20px;
+  border-radius: 8px;
+  width: 50%; 
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.close {
+  color: #fff;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+  color: #999;
+  text-decoration: none;
+  cursor: pointer;
+}
+

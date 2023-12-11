@@ -1,0 +1,44 @@
+.otherProfileContainer {
+    background-color: #1a1a1a; 
+    height: 100vh; 
+    color: #f0f0f0; 
+    overflow-x: auto; 
+  }
+  
+  .otherProfileBox {
+    background-color: #000000; 
+    padding: 16px; 
+    border-radius: 8px; 
+    width: 60%; 
+    margin: auto; 
+  }
+  
+  .otherProfileBox h2 {
+    margin-bottom: 16px; 
+  }
+  
+  .otherProfileDetails h4 {
+    margin-bottom: 8px; 
+  }
+  
+  .button {
+    background-color: rgb(43, 73, 195); 
+    color: white; 
+    border: none; 
+    padding: 8px 15px; 
+    margin-right: 10px; 
+    border-radius: 4px; 
+    cursor: pointer; 
+    transition: background-color 0.3s, transform 0.2s; 
+  }
+  
+  .button:hover {
+    background-color: #45a049; 
+    transform: translateY(-2px); 
+  }
+  
+  .button:disabled {
+    background-color: #cccccc; 
+    cursor: default; 
+  }
+  
