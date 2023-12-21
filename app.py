@@ -505,6 +505,39 @@ def add_to_liked_songs():
 
     except Exception as e:
         return jsonify({'message': f'Error: {str(e)}'}), 500
+    
+@app.route('/remove_from_liked_songs', methods=['POST'])
+def remove_from_liked_songs():
+    try:
+        # Get the current user from the session
+        username = session.get('username')
+        song_name = request.form.get('song_name')
+
+        if not username or not song_name:
+            return jsonify({'message': 'Required data is missing in the form data'}), 400
+
+        # Connect to the database
+        client = connect_to_mongo()
+        db = client.MusicDB
+        UserInfo_collection = db.UserInfo
+
+        # Check if the user exists
+        user = UserInfo_collection.find_one({'username': username})
+        if user is None:
+            return jsonify({'message': 'User not found'}), 404
+
+        # Check if the song is in likedSongs
+        existing_entry = next((entry for entry in user['likedSongs'] if entry['song'] == song_name), None)
+
+        if existing_entry:
+            # Remove the entry from likedSongs
+            UserInfo_collection.update_one({'username': username}, {'$pull': {'likedSongs': {'song': song_name}}})
+            return jsonify({'message': f'Song "{song_name}" removed from likedSongs'})
+        else:
+            return jsonify({'message': f'Song "{song_name}" not found in likedSongs'}), 404
+
+    except Exception as e:
+        return jsonify({'message': f'Error: {str(e)}'}), 500
 
 # Endpoint to rate a song
 @app.route('/rate_song', methods=['POST'])
@@ -1263,7 +1296,65 @@ def recommend_song():
         return jsonify({'message': f'Error: {str(e)}'}), 500
 #FRIENDSHIP ACTIVITY
 ############################
-# Connect to the database
+# Endpoint to add a playlist to the likedPlaylists array
+@app.route('/like_playlist', methods=['POST'])
+def like_playlist():
+    try:
+        # Get the current user from the session
+        username = session.get('username')
+        friend_username = request.form.get('friend_username')  # The owner of the playlist
+        playlist_name = request.form.get('playlist_name')
+
+        if not username or not friend_username or not playlist_name:
+            return jsonify({'message': 'Required data is missing in the form data'}), 400
+
+        # Connect to the database
+        client = connect_to_mongo()
+        db = client.MusicDB
+        UserInfo_collection = db.UserInfo
+
+        # Check if the user exists
+        user = UserInfo_collection.find_one({'username': username})
+        if user is None:
+            return jsonify({'message': 'User not found'}), 404
+
+        # Check if the friend (owner of the playlist) exists
+        friend = UserInfo_collection.find_one({'username': friend_username})
+        if friend is None:
+            return jsonify({'message': 'Friend not found'}), 404
+        # Check if the playlist exists within the friend's playlists
+        friend_playlists = friend.get('playlists', [])
+        playlist_exists = any(pl['playlist_name'] == playlist_name for pl in friend_playlists)
+
+        if not playlist_exists:
+            return jsonify({'message': f'Playlist "{playlist_name}" not found in friend\'s playlists'}), 404
+
+        # Check if the playlist is already in likedPlaylists
+        existing_entry = next(
+            (entry for entry in user.get('likedPlaylists', []) if entry.get('friend') == friend_username and entry.get('playlist_name') == playlist_name),
+            None
+        )
+
+        if existing_entry:
+            return jsonify({'message': 'Playlist already in likedPlaylists'}), 400
+
+        # Add the new entry to likedPlaylists
+        new_entry = {'friend': friend_username, 'playlist_name': playlist_name}
+        UserInfo_collection.update_one({'username': username}, {'$push': {'likedPlaylists': new_entry}})
+
+        return jsonify({'message': f'Playlist "{playlist_name}" by "{friend_username}" added to likedPlaylists'})
+    except Exception as e:
+        return jsonify({'message': f'Error: {str(e)}'}), 500
+
+
+       
+                           
+    
+
+        
+
+
+
         
 # Function to get the last added liked song from a user's liked songs
 def get_last_liked_song(username):
