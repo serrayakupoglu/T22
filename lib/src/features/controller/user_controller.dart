@@ -9,6 +9,7 @@ import '../models/recommended_song.dart';
 import '../models/search_user.dart';
 import '../models/top_rated.dart';
 import '../models/user.dart';
+import '../models/user_cache.dart';
 import '../screen/analysis_page.dart';
 import '../screen/another_user_list.dart';
 import '../screen/another_user_profile_screen.dart';
@@ -23,9 +24,28 @@ class UserController {
   UserController({required this.context});
 
   Future<User> getUserProfile(String username) async {
+
+    User? userProfile = UserProfileCache.getUserProfile(username);
+
+    if( userProfile != null){
+      return userProfile;
+    }
+
     try {
-      // Call the service to fetch user profile
       User userProfile = await _userService.fetchUserProfile(username);
+      UserProfileCache.cacheUserProfile(userProfile.username, userProfile);
+      return userProfile;
+    } catch (e) {
+      print('Error in UserController: $e');
+      rethrow;
+    }
+  }
+
+  Future<User> updateUserProfile(String username) async {
+
+    try {
+      User userProfile = await _userService.fetchUserProfile(username);
+      UserProfileCache.cacheUserProfile(userProfile.username, userProfile);
       return userProfile;
     } catch (e) {
       print('Error in UserController: $e');

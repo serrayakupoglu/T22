@@ -35,85 +35,99 @@ class _AnotherUserProfileState extends State<AnotherUserProfile> {
     return controller.getUserProfile(username);
   }
 
+  Future<User?> updateData(String username) async {
+    return controller.updateUserProfile(username);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: const CommonAppBar(appBarText: "Profile", canGoBack: true),
       backgroundColor: const Color(kOpeningBG),
-      body: Column(
-        mainAxisSize: MainAxisSize.max,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          FutureBuilder(
-            future: userData,
-            builder: (context, snapshot) {
-              if (snapshot.hasData && snapshot.data != null) {
-                return Column(
-                  children: [
-                    Container(
-                      margin: EdgeInsets.only(left: 15, top: 10),
-                      child: Row(
-                        children: [
-                          Icon(Icons.supervised_user_circle, color: Colors.white, size: 82),
-                          Column(
+      body: RefreshIndicator(
+        onRefresh: () async {
+          print("refresh");
+          userData = updateData(widget.username);
+          setState(() {});
+        },
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
+            mainAxisSize: MainAxisSize.max,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              FutureBuilder(
+                future: userData,
+                builder: (context, snapshot) {
+                  if (snapshot.hasData && snapshot.data != null) {
+                    return Column(
+                      children: [
+                        Container(
+                          margin: EdgeInsets.only(left: 15, top: 10),
+                          child: Row(
                             children: [
-                              HeaderText(msg: "${snapshot.data!.name} ${snapshot.data!.surname}"),
-                              BodyText(msg: "@${snapshot.data!.username}")
+                              Icon(Icons.supervised_user_circle, color: Colors.white, size: 82),
+                              Column(
+                                children: [
+                                  HeaderText(msg: "${snapshot.data!.name} ${snapshot.data!.surname}"),
+                                  BodyText(msg: "@${snapshot.data!.username}")
+                                ],
+                              ),
                             ],
                           ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      margin: EdgeInsets.only(top: 10),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          GestureDetector(
-                            onTap: () {
-                              controller.navigateToFollowers(snapshot.data!.followers, widget.baseFollowings, snapshot.data!.username);
-                            },
-                            child: HeaderText(msg: "Followers: ${snapshot.data!.followers.length}"),
+                        ),
+                        Container(
+                          margin: EdgeInsets.only(top: 10),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              GestureDetector(
+                                onTap: () {
+                                  controller.navigateToFollowers(snapshot.data!.followers, widget.baseFollowings, snapshot.data!.username);
+                                },
+                                child: HeaderText(msg: "Followers: ${snapshot.data!.followers.length}"),
+                              ),
+                              GestureDetector(
+                                onTap: () {
+                                  controller.navigateToFollowings(snapshot.data!.followings, widget.baseFollowings, snapshot.data!.username);
+                                },
+                                child: HeaderText(msg: "Followings: ${snapshot.data!.followings.length}"),
+                              )
+                            ],
                           ),
-                          GestureDetector(
-                            onTap: () {
-                              controller.navigateToFollowings(snapshot.data!.followings, widget.baseFollowings, snapshot.data!.username);
-                            },
-                            child: HeaderText(msg: "Followings: ${snapshot.data!.followings.length}"),
-                          )
-                        ],
-                      ),
-                    ),
-                    Container(
-                      margin: EdgeInsets.only(top: 10),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          GestureDetector(
-                            onTap: () {
-                              controller.navigateOthersToLikedSongsPage(context, snapshot.data!);
-                            },
-                            child: HeaderText(msg: "Lists"), // Placeholder for My Lists
+                        ),
+                        Container(
+                          margin: EdgeInsets.only(top: 10),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              GestureDetector(
+                                onTap: () {
+                                  controller.navigateOthersToLikedSongsPage(context, snapshot.data!);
+                                },
+                                child: HeaderText(msg: "Lists"), // Placeholder for My Lists
+                              ),
+                              GestureDetector(
+                                onTap: () {
+                                  controller.navigateToAnalysis(widget.username);
+                                },
+                                child: HeaderText(msg: "Analysis"), // Placeholder for Analysis
+                              )
+                            ],
                           ),
-                          GestureDetector(
-                            onTap: () {
-                              controller.navigateToAnalysis(widget.username);
-                            },
-                            child: HeaderText(msg: "Analysis"), // Placeholder for Analysis
-                          )
-                        ],
-                      ),
-                    ),
-                  ],
-                );
-              } else {
-                return Container();
-              }
-            },
+                        ),
+                      ],
+                    );
+                  } else {
+                    return Container();
+                  }
+                },
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      )
     );
   }
 }

@@ -1,5 +1,10 @@
 import 'dart:convert';
 
+import 'package:flutter/cupertino.dart';
+import 'package:untitled1/src/features/models/recommendations_cache.dart';
+import 'package:untitled1/src/features/models/user_cache.dart';
+import 'package:untitled1/src/features/service/storage_service.dart';
+
 import '../models/friend_recommended_song.dart';
 import '../models/recommended_song.dart';
 import '../models/search_user.dart';
@@ -56,6 +61,10 @@ class UserService {
       final response = await _userRepository.logout(username);
 
       if (response.statusCode == 200) {
+        UserProfileCache.clearCache();
+        RecommendationsCache.clear();
+        StorageService().deleteSecureData('username');
+        StorageService().deleteSecureData('session');
         return true;
       } else {
         return false;
