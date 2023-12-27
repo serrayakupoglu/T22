@@ -700,7 +700,7 @@ def get_profile_endpoint():
             'followers': [str(follower) for follower in target_user['followers']],
             'following': [str(followee) for followee in target_user['following']],
             'likedSongs': [str(song) for song in target_user['likedSongs']],
-            'playlists': [list(playlist_name) for playlist_name in target_user['playlists']]
+            'playlists': [{'playlist_name': playlist['playlist_name'], 'tracks': playlist['tracks']} for playlist in target_user['playlists']]
         }
 
         return jsonify({'profile_info': profile_info})
