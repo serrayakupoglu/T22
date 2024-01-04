@@ -9,6 +9,7 @@ import random
 import string
 from collections import Counter
 from pymongo import MongoClient
+from bson import json_util
 
 app = Flask(__name__)
 app.secret_key = secrets.token_hex(16)
@@ -325,24 +326,50 @@ def add(artist_name):
     try:
         client = connect_to_mongo()
         top_tracks_response = get_artist_top_tracks(artist_name)
-
+        access_token = get_spotify_token()
         # Unpack the tuple and access the dictionary
         top_tracks_response_dict = top_tracks_response[0]
-
 
         if 'output' in top_tracks_response_dict and 'tracks' in top_tracks_response_dict['output']:
             top_tracks = top_tracks_response_dict['output']['tracks']
 
             for track_object in top_tracks:
-                add_track_to_db(track_object, client)
+                # Get track ID
+                track_id = track_object.get('id')
+                if not track_id:
+                    continue
 
+                # Use Spotify API to get audio features
+                audio_features_url = f'https://api.spotify.com/v1/audio-features?ids={track_id}'
+                headers = {
+                "Authorization": f"Bearer {access_token}"
+                }
+
+                response = requests.get(audio_features_url, headers=headers)
+                audio_features = response.json()
+
+                if 'audio_features' in audio_features and audio_features['audio_features']:
+                    # Extract relevant attributes from audio features
+                    features = audio_features['audio_features'][0]
+                    danceability = features.get('danceability')
+                    energy = features.get('energy')
+                    instrumentalness = features.get('instrumentalness')
+
+                    # Add these attributes to the track_object
+                    track_object['danceability'] = danceability
+                    track_object['energy'] = energy
+                    track_object['instrumentalness'] = instrumentalness
+
+                    # Add the modified track_object to the database
+                    add_track_to_db(track_object, client)
             return 'Success'
         else:
-            return 'Failed: "tracks" key not found in the response output'
-
+            return 'Failed'
     except Exception as e:
         print(f"Error: {e}")
         return 'Failed'
+
+
 
 @app.route('/delete_track', methods=['DELETE'])
 def delete_track():
@@ -366,7 +393,6 @@ def delete_track():
             return jsonify({'message': 'Track deleted successfully'})
         else:
             return jsonify({'message': 'Track not found'})
-
     except Exception as e:
         print(f"Error: {e}")
         return jsonify({'message': 'Failed to delete track'})
@@ -502,6 +528,39 @@ def add_to_liked_songs():
         UserInfo_collection.update_one({'username': username}, {'$push': {'likedSongs': new_entry}})
 
         return jsonify({'message': f'Song "{song_name}" by "{artist_name}" added to likedSongs'})
+
+    except Exception as e:
+        return jsonify({'message': f'Error: {str(e)}'}), 500
+    
+@app.route('/remove_from_liked_songs', methods=['POST'])
+def remove_from_liked_songs():
+    try:
+        # Get the current user from the session
+        username = session.get('username')
+        song_name = request.form.get('song_name')
+
+        if not username or not song_name:
+            return jsonify({'message': 'Required data is missing in the form data'}), 400
+
+        # Connect to the database
+        client = connect_to_mongo()
+        db = client.MusicDB
+        UserInfo_collection = db.UserInfo
+
+        # Check if the user exists
+        user = UserInfo_collection.find_one({'username': username})
+        if user is None:
+            return jsonify({'message': 'User not found'}), 404
+
+        # Check if the song is in likedSongs
+        existing_entry = next((entry for entry in user['likedSongs'] if entry['song'] == song_name), None)
+
+        if existing_entry:
+            # Remove the entry from likedSongs
+            UserInfo_collection.update_one({'username': username}, {'$pull': {'likedSongs': {'song': song_name}}})
+            return jsonify({'message': f'Song "{song_name}" removed from likedSongs'})
+        else:
+            return jsonify({'message': f'Song "{song_name}" not found in likedSongs'}), 404
 
     except Exception as e:
         return jsonify({'message': f'Error: {str(e)}'}), 500
@@ -667,7 +726,7 @@ def get_profile_endpoint():
             'followers': [str(follower) for follower in target_user['followers']],
             'following': [str(followee) for followee in target_user['following']],
             'likedSongs': [str(song) for song in target_user['likedSongs']],
-            'playlists': [list(playlist_name) for playlist_name in target_user['playlists']]
+            'playlists': [{'playlist_name': playlist['playlist_name'], 'tracks': playlist['tracks']} for playlist in target_user['playlists']]
         }
 
         return jsonify({'profile_info': profile_info})
@@ -1190,6 +1249,52 @@ def get_average_release_year():
     except Exception as e:
         return jsonify({'message': f'Error: {str(e)}'}), 500
     
+
+# Endpoint to analyze user's liked songs for happiness
+@app.route('/analyze_user_mode', methods=['GET'])
+def analyze_user_happiness():
+    try:
+        user = get_current_user()
+         # Connect to the database
+        client = connect_to_mongo()
+        db = client.MusicDB
+        UserInfo_collection = db.UserInfo
+        Track_collection = db.Track
+        liked_songs = user.get('likedSongs', [])
+
+        if not liked_songs:
+            return jsonify({'message': 'User has no liked songs'}), 400
+
+        # Fetch danceability and energy for the liked songs
+        liked_songs_info = []
+        for liked_song in liked_songs:
+            song_name = liked_song.get('song')
+            if song_name:
+                track_info = Track_collection.find_one({'name': song_name})
+                if track_info:
+                    liked_songs_info.append({
+                        'song_name': song_name,
+                        'danceability': track_info.get('danceability', 0.0),
+                        'energy': track_info.get('energy', 0.0)
+                    })
+
+        # Analyze danceability and energy for happiness and sadness
+        happy_songs = [song_info for song_info in liked_songs_info if song_info['danceability'] > 0.5 and song_info['energy'] > 0.5]
+        sad_songs = [song_info for song_info in liked_songs_info if song_info['danceability'] <= 0.5 and song_info['energy'] <= 0.5]
+
+        result = {
+            'message': 'User has more happy songs' if len(happy_songs) > len(sad_songs) else 'User has more sad songs',
+            'happy_songs': happy_songs,
+            'sad_songs': sad_songs
+        }
+
+        return jsonify(result)
+
+    except Exception as e:
+        return jsonify({'message': f'Error: {str(e)}'}), 500
+
+
+    
 ##RECCOMENDATION
 
 # Endpoint to recommend a song based on the genre of the highest-rated song
@@ -1261,9 +1366,123 @@ def recommend_song():
 
     except Exception as e:
         return jsonify({'message': f'Error: {str(e)}'}), 500
+    
+
+
+# Endpoint to recommend tracks for an Energetic Playlist
+@app.route('/recommend_energetic_playlist', methods=['GET'])
+def recommend_energetic_playlist():
+    try:
+        # Connect to the database
+        client = connect_to_mongo()
+        db = client.MusicDB
+        UserInfo_collection = db.UserInfo
+        Track_collection = db.Track
+        # Get energetic tracks with high danceability and energy
+        energetic_tracks = Track_collection.find({
+            'danceability': {'$gte': 0.7},  # Adjust threshold as needed
+            'energy': {'$gte': 0.7}  # Adjust threshold as needed
+        }).limit(10)  # Limit the number of recommended tracks
+
+         # Extract only the song name and artist from the tracks
+        recommendations = [
+            {'song_name': track['name'], 'artist': track['artists'][0]['name']}
+            for track in energetic_tracks
+        ]
+
+        return jsonify({'recommendations': recommendations})
+    except Exception as e:
+        return jsonify({'message': f'Error: {str(e)}'}), 500
+
+
+# Endpoint to recommend tracks for a Relaxing Playlist
+@app.route('/recommend_relaxing_playlist', methods=['GET'])
+def recommend_relaxing_playlist():
+    try:
+        # Connect to the database
+        client = connect_to_mongo()
+        db = client.MusicDB
+        UserInfo_collection = db.UserInfo
+        Track_collection = db.Track
+        # Get relaxing tracks with low danceability and energy
+        relaxing_tracks = Track_collection.find({
+            'danceability': {'$lt': 0.4},  
+            'energy': {'$lt': 0.4}  
+        }).limit(10)  # Limit the number of recommended tracks
+
+         # Extract only the song name and artist from the tracks
+        recommendations = [
+            {'song_name': track['name'], 'artist': track['artists'][0]['name']}
+            for track in relaxing_tracks
+        ]
+
+        return jsonify({'recommendations': recommendations})
+
+    except Exception as e:
+        return jsonify({'message': f'Error: {str(e)}'}), 500
+
+
 #FRIENDSHIP ACTIVITY
 ############################
-# Connect to the database
+# Endpoint to add a playlist to the likedPlaylists array
+@app.route('/like_playlist', methods=['POST'])
+def like_playlist():
+    try:
+        # Get the current user from the session
+        username = session.get('username')
+        friend_username = request.form.get('friend_username')  # The owner of the playlist
+        playlist_name = request.form.get('playlist_name')
+
+        if not username or not friend_username or not playlist_name:
+            return jsonify({'message': 'Required data is missing in the form data'}), 400
+
+        # Connect to the database
+        client = connect_to_mongo()
+        db = client.MusicDB
+        UserInfo_collection = db.UserInfo
+
+        # Check if the user exists
+        user = UserInfo_collection.find_one({'username': username})
+        if user is None:
+            return jsonify({'message': 'User not found'}), 404
+
+        # Check if the friend (owner of the playlist) exists
+        friend = UserInfo_collection.find_one({'username': friend_username})
+        if friend is None:
+            return jsonify({'message': 'Friend not found'}), 404
+        # Check if the playlist exists within the friend's playlists
+        friend_playlists = friend.get('playlists', [])
+        playlist_exists = any(pl['playlist_name'] == playlist_name for pl in friend_playlists)
+
+        if not playlist_exists:
+            return jsonify({'message': f'Playlist "{playlist_name}" not found in friend\'s playlists'}), 404
+
+        # Check if the playlist is already in likedPlaylists
+        existing_entry = next(
+            (entry for entry in user.get('likedPlaylists', []) if entry.get('friend') == friend_username and entry.get('playlist_name') == playlist_name),
+            None
+        )
+
+        if existing_entry:
+            return jsonify({'message': 'Playlist already in likedPlaylists'}), 400
+
+        # Add the new entry to likedPlaylists
+        new_entry = {'friend': friend_username, 'playlist_name': playlist_name}
+        UserInfo_collection.update_one({'username': username}, {'$push': {'likedPlaylists': new_entry}})
+
+        return jsonify({'message': f'Playlist "{playlist_name}" by "{friend_username}" added to likedPlaylists'})
+    except Exception as e:
+        return jsonify({'message': f'Error: {str(e)}'}), 500
+
+
+       
+                           
+    
+
+        
+
+
+
         
 # Function to get the last added liked song from a user's liked songs
 def get_last_liked_song(username):
