@@ -3,17 +3,19 @@ import 'package:untitled1/src/features/models/friend_recommended_song.dart';
 import 'package:untitled1/src/features/screen/followers_screen.dart';
 import 'package:untitled1/src/features/screen/followings_screen.dart';
 import 'package:untitled1/src/features/screen/opening_screen.dart';
-import 'package:untitled1/src/features/screen/user_profile_screen.dart';
+import 'package:untitled1/src/features/screen/playlists_screen.dart';
 import 'package:untitled1/src/features/service/storage_service.dart';
 import '../models/recommended_song.dart';
 import '../models/search_user.dart';
+import '../models/song.dart';
 import '../models/top_rated.dart';
 import '../models/user.dart';
 import '../models/user_cache.dart';
 import '../screen/analysis_page.dart';
 import '../screen/another_user_list.dart';
 import '../screen/another_user_profile_screen.dart';
-import '../screen/user_lists_screen.dart';
+import '../screen/liked_songs_screen.dart';
+import '../screen/playlist_content_screen.dart';
 import '../service/user_service.dart';
 
 class UserController {
@@ -109,6 +111,18 @@ class UserController {
     return response;
   }
 
+  Future<bool> createPlaylist(String playlistName) async {
+    final response = await _userService.createPlaylist(playlistName);
+    return response;
+  }
+
+  Future<bool> addToPlaylist(String songName, String playlistName) async {
+    final response = await _userService.addToPlaylist(songName, playlistName);
+    return response;
+  }
+
+
+
   void navigateToFollowers(List<String> followers, List<String> followings, String username) {
     Navigator.of(context).push(MaterialPageRoute(builder: (context) {
       return FollowersPage(followers: followers, followings: followings, currentUserName: username);
@@ -145,6 +159,20 @@ class UserController {
       return OthersLikedSongsPage(user: user);
     }));
   }
+
+  void navigateToMyListsPage(BuildContext context, String username, bool hasAddButton) {
+    Navigator.of(context).push(MaterialPageRoute(builder: (context) {
+      return SongListScreen(username: username, hasFloatingButton: hasAddButton);
+    }));
+  }
+
+  void navigateToPlaylistContentPage(BuildContext context, List<Song> songList, String listName) {
+    Navigator.of(context).push(MaterialPageRoute(builder: (context) {
+      return PlaylistContentPage(songList: songList, listName: listName);
+    }));
+  }
+
+
 
 }
 

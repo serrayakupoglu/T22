@@ -121,5 +121,24 @@ class UserService {
 
   }
 
+  Future<bool> createPlaylist(String playlistName) async {
+    final response = await _userRepository.createPlaylist(playlistName);
+
+    if(response.statusCode == 200) {
+      return true;
+    }
+    return false;
+  }
+
+  Future<bool> addToPlaylist(String songName, String playlistName) async {
+    final response = await _userRepository.addToPlaylist(songName, playlistName);
+    if(response.statusCode == 200) {
+      return true;
+    }
+    return false;
+  }
+
+
+
 
 }

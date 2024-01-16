@@ -104,7 +104,7 @@ class _AnotherUserProfileState extends State<AnotherUserProfile> {
                             children: [
                               GestureDetector(
                                 onTap: () {
-                                  controller.navigateOthersToLikedSongsPage(context, snapshot.data!);
+                                  controller.navigateToMyListsPage(context, snapshot.data!.username, false);
                                 },
                                 child: HeaderText(msg: "Lists"), // Placeholder for My Lists
                               ),
@@ -114,6 +114,20 @@ class _AnotherUserProfileState extends State<AnotherUserProfile> {
                                 },
                                 child: HeaderText(msg: "Analysis"), // Placeholder for Analysis
                               )
+                            ],
+                          ),
+                        ),
+                        Container(
+                          margin: EdgeInsets.only(top: 10),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              GestureDetector(
+                                onTap: () {
+                                  controller.navigateOthersToLikedSongsPage(context, snapshot.data!);
+                                },
+                                child: HeaderText(msg: "Likings"), // Placeholder for My Lists
+                              ),
                             ],
                           ),
                         ),

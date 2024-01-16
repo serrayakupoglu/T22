@@ -106,7 +106,7 @@ class _UserProfileState extends State<UserProfile> {
                             children: [
                               GestureDetector(
                                 onTap: () {
-                                  controller.navigateToLikedSongsPage(context, snapshot.data!);
+                                  controller.navigateToMyListsPage(context, snapshot.data!.username, true);
                                 },
                                 child: const HeaderText(msg: "My Lists"), // Placeholder for My Lists
                               ),
@@ -119,7 +119,23 @@ class _UserProfileState extends State<UserProfile> {
                             ],
                           ),
                         ),
-                        Container(margin: EdgeInsets.only(top: 300),child: ProfileButton(buttonText: "Logout", onPressed: () {controller.logout(snapshot.data!.username);}),)
+                        Container(
+                          margin: const EdgeInsets.only(top: 10),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              GestureDetector(
+                                onTap: () {
+                                  controller.navigateToLikedSongsPage(context, snapshot.data!);
+                                },
+                                child: const HeaderText(msg: "Likings"), // Placeholder for My Lists
+                              ),
+                            ],
+                          ),
+                        ),
+
+
+                        Container(margin: EdgeInsets.only(top: 250),child: ProfileButton(buttonText: "Logout", onPressed: () {controller.logout(snapshot.data!.username);}),)
                       ],
 
                     );

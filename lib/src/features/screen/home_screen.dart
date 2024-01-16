@@ -1,12 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:untitled1/src/features/common_widgets/body_text.dart';
-import 'package:untitled1/src/features/common_widgets/common_app_bar.dart';
 import 'package:untitled1/src/features/controller/user_controller.dart';
 import 'package:untitled1/src/features/models/recommendations_cache.dart';
 import 'package:untitled1/src/features/models/recommended_song.dart';
-import 'package:untitled1/src/features/screen/search_screen.dart';
-import 'package:untitled1/src/features/screen/user_profile_screen.dart';
-
 import '../models/friend_recommended_song.dart';
 
 

@@ -5,10 +5,12 @@ import 'package:untitled1/src/features/common_widgets/header_text.dart';
 import 'package:untitled1/src/features/common_widgets/song_box.dart';
 import 'package:untitled1/src/features/controller/song_controller.dart';
 import 'package:untitled1/src/features/controller/user_controller.dart';
+import 'package:untitled1/src/features/models/user_cache.dart';
 import 'package:untitled1/src/features/service/storage_service.dart';
 import '../constants.dart';
 import '../models/search_user.dart';
 import '../models/song.dart';
+import '../models/user.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -26,18 +28,26 @@ class _SearchScreenState extends State<SearchScreen> {
   List<SearchUser> userList = [];
   late SongController controller;
   late UserController userController;
-  late Future<String?> username;
+  late String? username;
+  late Future<User?> userData;
 
   @override
   void initState() {
     super.initState();
     controller = SongController(context);
     userController = UserController(context: context);
-    username = fetchUserName();
+    userData = fetchUserData();
   }
 
-  Future<String?> fetchUserName() async {
-    return await storageService.readSecureData('username');
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
+
+  Future<User?> fetchUserData() async {
+   username = await storageService.readSecureData('username');
+    return userController.getUserProfile('$username');
   }
 
   @override
@@ -104,6 +114,96 @@ class _SearchScreenState extends State<SearchScreen> {
                         builder: (BuildContext context) {
                           return BottomSongSheet(
                             song: songList[index],
+                            addSongFunction: () async {
+                              showDialog(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return AlertDialog(
+                                    title: Text('Select Playlist'),
+                                    content: Container(
+                                      width: double.maxFinite, // Adjust the width as needed
+                                      height: 300, // Set a specific height or use constraints
+                                      child: FutureBuilder<User?>(
+                                        future: userData,
+                                        builder: (context, snapshot) {
+                                          if (snapshot.connectionState == ConnectionState.waiting) {
+                                            return Center(child: CircularProgressIndicator());
+                                          } else if (snapshot.hasData && snapshot.data != null) {
+                                            User? user = snapshot.data!;
+
+                                            return ListView.builder(
+                                              itemCount: user.playlists.length,
+                                              itemBuilder: (context, index2) {
+                                                String playlistName = user.playlists[index2].name;
+
+                                                return ListTile(
+                                                  title: Text(playlistName),
+                                                  onTap: () async {
+                                                    await userController.addToPlaylist(songList[index].songName, playlistName).then((success) {
+                                                      if(success) {
+                                                        userController.updateUserProfile(user.username);
+                                                        showDialog(
+                                                          context: context,
+                                                          builder: (BuildContext context) {
+                                                            return AlertDialog(
+                                                              title: const Text('Success'),
+                                                              content: const Text('Song Successfully Added To The Playlist!'),
+                                                              actions: <Widget>[
+                                                                TextButton(
+                                                                  child: const Text('OK'),
+                                                                  onPressed: () {
+                                                                    Navigator.of(context).pop();
+                                                                    Navigator.of(context).pop(); // Close the previous dialog
+                                                                  },
+                                                                ),
+                                                              ],
+                                                            );
+                                                          },
+                                                        );
+                                                      }
+                                                      else {
+                                                        showDialog(
+                                                          context: context,
+                                                          builder: (BuildContext context) {
+                                                            return AlertDialog(
+                                                              title: Text('Failed'),
+                                                              content: Text('Failed To Add.'),
+                                                              actions: <Widget>[
+                                                                TextButton(
+                                                                  child: Text('Retry'),
+                                                                  onPressed: () {
+                                                                    Navigator.of(context).pop();
+                                                                  },
+                                                                ),
+                                                                TextButton(
+                                                                  child: Text('Cancel'),
+                                                                  onPressed: () {
+                                                                    Navigator.of(context).pop();
+                                                                    Navigator.of(context).pop(); // Close the previous dialog
+                                                                  },
+                                                                ),
+                                                              ],
+                                                            );
+                                                          },
+                                                        );
+                                                      }
+                                                    } );
+
+                                                  },
+                                                );
+                                              },
+                                            );
+                                          } else {
+                                            return Center(child: Text('No playlists available'));
+                                          }
+                                        },
+                                      ),
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+
                             likeSongFunction: () async {
                               final response = await userController.addSongToLikedList('$username', songList[index].songName);
                               Future.delayed(Duration.zero, () {

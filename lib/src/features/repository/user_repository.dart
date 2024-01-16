@@ -16,8 +16,16 @@ class UserRepository {
     if (response.statusCode == 200) {
       // Parse the JSON response and create a User object
       Map<String, dynamic> jsonResponse = json.decode(response.body);
+
       User user = User.fromJson(jsonResponse);
-      print(user.likedSongs);
+
+
+      for (int i = 0; i < user.playlists.length; i++) {
+        for (int j = 0; j < user.playlists[i].tracks.length; j++) {
+          print(user.playlists[i].tracks[j].songName);
+        }
+      }
+
       return user;
     } else {
       // Find a way to return errors
@@ -142,5 +150,45 @@ class UserRepository {
         });
     return response;
   }
+
+  Future<http.Response> createPlaylist(String playlistName) async {
+    print(playlistName);
+    final url = Uri.parse('$kBaseUrl/create_playlist');
+    final session = await storageService.readSecureData('session');
+    final response = await http.post(
+        url,
+        headers: {
+          'Authorization': 'Bearer $session',
+          'cookie': 'session=$session',
+        },
+        body: {
+          'playlist_name': playlistName
+        }
+      );
+    return response;
+  }
+
+  Future<http.Response> addToPlaylist(String songName, String playlistName) async {
+    final url = Uri.parse('$kBaseUrl/add_to_playlist');
+    final session = await storageService.readSecureData('session');
+
+    // Convert List<String> to a String using join
+    final List<String> tracks = [songName];
+    final String tracksAsString = tracks.join(',');
+
+    final response = await http.post(
+      url,
+      headers: {
+        'Authorization': 'Bearer $session',
+        'cookie': 'session=$session',
+      },
+      body: {
+        'playlist_name': playlistName,
+        'tracks[]': tracksAsString,
+      },
+    );
+    return response;
+  }
+
 
 }

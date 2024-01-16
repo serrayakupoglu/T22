@@ -6,7 +6,8 @@ class BottomSongSheet extends StatefulWidget {
 
   final Song song;
   final VoidCallback? likeSongFunction;
-  const BottomSongSheet({super.key, required this.song, this.likeSongFunction});
+  final VoidCallback? addSongFunction;
+  const BottomSongSheet({super.key, required this.song, this.likeSongFunction, this.addSongFunction});
 
 
 
@@ -35,7 +36,7 @@ class _BottomSongSheetState extends State<BottomSongSheet>{
             children: [
               IconButton(
                   onPressed: widget.likeSongFunction,
-                  icon: Icon(Icons.add),
+                  icon: Icon(Icons.favorite),
               ),
               IconButton(
                   onPressed: () {
@@ -47,7 +48,7 @@ class _BottomSongSheetState extends State<BottomSongSheet>{
                     );
                   },
                   icon: Icon(Icons.star_rate)),
-              IconButton(onPressed: (){}, icon: Icon(Icons.info_outline))
+              IconButton(onPressed: widget.addSongFunction, icon: Icon(Icons.add))
             ],
           )
         ],

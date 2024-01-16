@@ -98,6 +98,9 @@ const int kSearchBoxMoreIconColor = 0xFFE4E4E4;
 const String kFollowersAppBarText = "Followers";
 const String kFollowingsAppBarText = "Followings";
 const String kProfileAppBarText = "Profile";
+const String kMyListsAppBarText = "My Lists";
+const String kListsAppBarText = "Lists";
 
 // Home Page
 const String kHomeAppBarText = "Home Page";
+

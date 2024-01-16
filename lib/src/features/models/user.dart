@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:untitled1/src/features/models/song.dart';
+
 class User {
   final String username;
   final String name;
@@ -7,6 +9,7 @@ class User {
   final List<String> followers;
   final List<String> followings;
   final List<Map<String, String>> likedSongs;
+  final List<Playlist> playlists;
 
   User({
     required this.username,
@@ -15,6 +18,7 @@ class User {
     required this.followers,
     required this.followings,
     required this.likedSongs,
+    required this.playlists,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -30,9 +34,28 @@ class User {
     if (profileInfo.containsKey('likedSongs')) {
       var likedSongsList = profileInfo['likedSongs'] as List<dynamic>;
       likedSongs = likedSongsList.map((song) {
-        // Assuming 'song' is in the format: {'song': 'Umbrella', 'artist': 'Rihanna'}
         var songMap = jsonDecode(song.replaceAll("'", '"'));
         return Map<String, String>.from(songMap);
+      }).toList();
+    }
+
+    List<Playlist> playlists = [];
+
+    if (profileInfo.containsKey('playlists')) {
+      var playlistsList = profileInfo['playlists'] as List<dynamic>;
+      playlists = playlistsList.map((playlist) {
+        String playlistName = playlist['playlist_name'].toString();
+
+        List<Song> songs = [];
+
+        if (playlist.containsKey('tracks')) {
+          var tracksList = playlist['tracks'] as List<dynamic>;
+          songs = tracksList.map<Song>((track) {
+            return Song.fromJson(track as Map<String, dynamic>);
+          }).toList();
+        }
+
+        return Playlist(name: playlistName, tracks: songs);
       }).toList();
     }
 
@@ -43,11 +66,18 @@ class User {
       followers: followers,
       followings: followings,
       likedSongs: likedSongs,
+      playlists: playlists,
     );
   }
 }
 
+class Playlist {
+  final String name;
+  final List<Song> tracks;
 
+  Playlist({
+    required this.name,
+    required this.tracks,
+  });
 
-
-
+}

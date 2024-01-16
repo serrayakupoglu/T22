@@ -15,5 +15,9 @@ class UserProfileCache {
     _cache.clear();
   }
 
+  static void updatePlaylists(String username, String playlistName) {
+    _cache[username]?.playlists.add(Playlist(name: playlistName, tracks: []));
+  }
+
 
 }
