@@ -1,5 +1,7 @@
 from flask import Flask, jsonify, request, session
-from datetime import timedelta
+from datetime import timedelta,datetime
+
+
 import certifi
 import requests
 import json 
@@ -9,6 +11,7 @@ import random
 import string
 from collections import Counter
 from pymongo import MongoClient
+from bson import json_util
 
 app = Flask(__name__)
 app.secret_key = secrets.token_hex(16)
@@ -96,13 +99,14 @@ def get_artist_top_tracks(artist_name):
 def convert_track_format(input_json):
     # New tracks list to build up the converted format
     new_tracks = []
-    
+    current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     # Process each track in the input JSON
     for track in input_json['tracks']:
         # Convert the track to the new format
         new_track = {
             # "_id": generate_oid(),
+            "added_at": current_time,
             "album": {
                 "id": track['album']['id'],
                 "name": track['album']['name'],
@@ -325,24 +329,50 @@ def add(artist_name):
     try:
         client = connect_to_mongo()
         top_tracks_response = get_artist_top_tracks(artist_name)
-
+        access_token = get_spotify_token()
         # Unpack the tuple and access the dictionary
         top_tracks_response_dict = top_tracks_response[0]
-
 
         if 'output' in top_tracks_response_dict and 'tracks' in top_tracks_response_dict['output']:
             top_tracks = top_tracks_response_dict['output']['tracks']
 
             for track_object in top_tracks:
-                add_track_to_db(track_object, client)
+                # Get track ID
+                track_id = track_object.get('id')
+                if not track_id:
+                    continue
 
+                # Use Spotify API to get audio features
+                audio_features_url = f'https://api.spotify.com/v1/audio-features?ids={track_id}'
+                headers = {
+                "Authorization": f"Bearer {access_token}"
+                }
+
+                response = requests.get(audio_features_url, headers=headers)
+                audio_features = response.json()
+
+                if 'audio_features' in audio_features and audio_features['audio_features']:
+                    # Extract relevant attributes from audio features
+                    features = audio_features['audio_features'][0]
+                    danceability = features.get('danceability')
+                    energy = features.get('energy')
+                    instrumentalness = features.get('instrumentalness')
+
+                    # Add these attributes to the track_object
+                    track_object['danceability'] = danceability
+                    track_object['energy'] = energy
+                    track_object['instrumentalness'] = instrumentalness
+
+                    # Add the modified track_object to the database
+                    add_track_to_db(track_object, client)
             return 'Success'
         else:
-            return 'Failed: "tracks" key not found in the response output'
-
+            return 'Failed'
     except Exception as e:
         print(f"Error: {e}")
         return 'Failed'
+
+
 
 @app.route('/delete_track', methods=['DELETE'])
 def delete_track():
@@ -366,7 +396,6 @@ def delete_track():
             return jsonify({'message': 'Track deleted successfully'})
         else:
             return jsonify({'message': 'Track not found'})
-
     except Exception as e:
         print(f"Error: {e}")
         return jsonify({'message': 'Failed to delete track'})
@@ -473,7 +502,7 @@ def add_to_liked_songs():
         db = client.MusicDB
         UserInfo_collection = db.UserInfo
         Track_collection = db.Track
-
+        
         # Check if the user exists
         user = UserInfo_collection.find_one({'username': username})
         if user is None:
@@ -498,7 +527,7 @@ def add_to_liked_songs():
             return jsonify({'message': 'Song and artist already in likedSongs'}), 400
 
         # Add the new entry to likedSongs
-        new_entry = {'song': song_name, 'artist': artist_name}
+        new_entry = {'song': song_name, 'artist': artist_name,'liked_at': datetime.utcnow()}
         UserInfo_collection.update_one({'username': username}, {'$push': {'likedSongs': new_entry}})
 
         return jsonify({'message': f'Song "{song_name}" by "{artist_name}" added to likedSongs'})
@@ -1223,6 +1252,52 @@ def get_average_release_year():
     except Exception as e:
         return jsonify({'message': f'Error: {str(e)}'}), 500
     
+
+# Endpoint to analyze user's liked songs for happiness
+@app.route('/analyze_user_mode', methods=['GET'])
+def analyze_user_happiness():
+    try:
+        user = get_current_user()
+         # Connect to the database
+        client = connect_to_mongo()
+        db = client.MusicDB
+        UserInfo_collection = db.UserInfo
+        Track_collection = db.Track
+        liked_songs = user.get('likedSongs', [])
+
+        if not liked_songs:
+            return jsonify({'message': 'User has no liked songs'}), 400
+
+        # Fetch danceability and energy for the liked songs
+        liked_songs_info = []
+        for liked_song in liked_songs:
+            song_name = liked_song.get('song')
+            if song_name:
+                track_info = Track_collection.find_one({'name': song_name})
+                if track_info:
+                    liked_songs_info.append({
+                        'song_name': song_name,
+                        'danceability': track_info.get('danceability', 0.0),
+                        'energy': track_info.get('energy', 0.0)
+                    })
+
+        # Analyze danceability and energy for happiness and sadness
+        happy_songs = [song_info for song_info in liked_songs_info if song_info['danceability'] > 0.5 and song_info['energy'] > 0.5]
+        sad_songs = [song_info for song_info in liked_songs_info if song_info['danceability'] <= 0.5 and song_info['energy'] <= 0.5]
+
+        result = {
+            'message': 'User has more happy songs' if len(happy_songs) > len(sad_songs) else 'User has more sad songs',
+            'happy_songs': happy_songs,
+            'sad_songs': sad_songs
+        }
+
+        return jsonify(result)
+
+    except Exception as e:
+        return jsonify({'message': f'Error: {str(e)}'}), 500
+
+
+    
 ##RECCOMENDATION
 
 # Endpoint to recommend a song based on the genre of the highest-rated song
@@ -1294,6 +1369,62 @@ def recommend_song():
 
     except Exception as e:
         return jsonify({'message': f'Error: {str(e)}'}), 500
+    
+
+
+# Endpoint to recommend tracks for an Energetic Playlist
+@app.route('/recommend_energetic_playlist', methods=['GET'])
+def recommend_energetic_playlist():
+    try:
+        # Connect to the database
+        client = connect_to_mongo()
+        db = client.MusicDB
+        UserInfo_collection = db.UserInfo
+        Track_collection = db.Track
+        # Get energetic tracks with high danceability and energy
+        energetic_tracks = Track_collection.find({
+            'danceability': {'$gte': 0.7},  # Adjust threshold as needed
+            'energy': {'$gte': 0.7}  # Adjust threshold as needed
+        }).limit(10)  # Limit the number of recommended tracks
+
+         # Extract only the song name and artist from the tracks
+        recommendations = [
+            {'song_name': track['name'], 'artist': track['artists'][0]['name']}
+            for track in energetic_tracks
+        ]
+
+        return jsonify({'recommendations': recommendations})
+    except Exception as e:
+        return jsonify({'message': f'Error: {str(e)}'}), 500
+
+
+# Endpoint to recommend tracks for a Relaxing Playlist
+@app.route('/recommend_relaxing_playlist', methods=['GET'])
+def recommend_relaxing_playlist():
+    try:
+        # Connect to the database
+        client = connect_to_mongo()
+        db = client.MusicDB
+        UserInfo_collection = db.UserInfo
+        Track_collection = db.Track
+        # Get relaxing tracks with low danceability and energy
+        relaxing_tracks = Track_collection.find({
+            'danceability': {'$lt': 0.4},  
+            'energy': {'$lt': 0.4}  
+        }).limit(10)  # Limit the number of recommended tracks
+
+         # Extract only the song name and artist from the tracks
+        recommendations = [
+            {'song_name': track['name'], 'artist': track['artists'][0]['name']}
+            for track in relaxing_tracks
+        ]
+
+        return jsonify({'recommendations': recommendations})
+
+    except Exception as e:
+        return jsonify({'message': f'Error: {str(e)}'}), 500
+
+
 #FRIENDSHIP ACTIVITY
 ############################
 # Endpoint to add a playlist to the likedPlaylists array
