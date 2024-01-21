@@ -736,7 +736,6 @@ def get_profile_endpoint():
         if target_user is None:
             return jsonify({'message': 'Target user not found'}), 404
 
-        
         profile_info = {
             'name': target_user['name'],
             'surname': target_user['surname'],
@@ -744,14 +743,31 @@ def get_profile_endpoint():
             'followers': [str(follower) for follower in target_user['followers']],
             'following': [str(followee) for followee in target_user['following']],
             'likedSongs': [str(song) for song in target_user['likedSongs']],
-            'playlists': [{'playlist_name': playlist['playlist_name'], 'tracks': playlist['tracks']} for playlist in target_user['playlists']]
-            
+            'rated_songs': [dict(entry) for entry in target_user['rated_songs']],  # Convert to a list of dictionaries
+            'playlists': [],
+            'likedPlaylists': []
         }
+
+        # Add playlists to the profile_info
+        if 'playlists' in target_user:
+            profile_info['playlists'] = [
+                {
+                    'playlist_name': playlist['playlist_name'],
+                    'tracks': playlist.get('tracks', [])  # Use get to handle the case where 'tracks' is not present
+                }
+                for playlist in target_user['playlists']
+            ]
+
+        # Add likedPlaylists to the profile_info
+        if 'likedPlaylists' in target_user:
+            profile_info['likedPlaylists'] = target_user['likedPlaylists']
 
         return jsonify({'profile_info': profile_info})
 
     except Exception as e:
         return jsonify({'message': f'Error: {str(e)}'}), 500
+
+
 #####################################################
 
 
