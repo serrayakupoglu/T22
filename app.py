@@ -775,7 +775,6 @@ def get_profile_endpoint():
 @app.route('/create_playlist', methods=['POST'])
 def create_playlist():
     try:
-
         # Get data from the request body
         playlist_name = request.form.get('playlist_name')
 
@@ -792,10 +791,11 @@ def create_playlist():
             user = UserInfo_collection.find_one({'username': username})
 
             if user:
-                # Create the new playlist object with an empty list of tracks
+                # Create the new playlist object with an empty list of tracks and initialize likes to 0
                 new_playlist = {
                     'playlist_name': playlist_name,
                     'tracks': [],
+                    'likes': 0  # Initialize likes to 0
                 }
 
                 # Add the playlist to the user's playlists array
@@ -925,6 +925,7 @@ def create_collaborative_playlist():
             'owner': [{'id': current_user['_id'], 'name': current_user['username']}],
             'members': [{'id': current_user['_id'], 'name': current_user['username']}],
             'created_at': format(datetime.utcnow()),
+            'likes': 0,
             'songs': []  # You can extend this for collaborative songs
         }
 
@@ -938,6 +939,7 @@ def create_collaborative_playlist():
                 'playlist_id': str(playlist_id),
                 'owner': [{'id': str(current_user['_id']), 'name': current_user['username']}],
                 'members': [{'id': str(current_user['_id']), 'name': current_user['username']}],
+                'likes':0,
                 'songs': []
             }}}
         )
@@ -1655,6 +1657,52 @@ def recommend_relaxing_playlist():
     except Exception as e:
         return jsonify({'message': f'Error: {str(e)}'}), 500
 
+# Endpoint to recommend a playlist based on the same artist
+@app.route('/recommend_playlist', methods=['GET'])
+def recommend_playlist():
+    try:
+        # Check if the user is logged in
+        current_user = get_current_user()
+        if current_user is None:
+            return jsonify({'message': 'User not logged in'}), 401
+
+        # Connect to the database
+        client = connect_to_mongo()
+        db = client.MusicDB
+        UserInfo_collection = db.UserInfo
+        Track_collection = db.Track
+
+        # Get the user's liked artists
+        liked_artists = set()
+        for liked_song in current_user['likedSongs']:
+            artist_name = liked_song.get('artist')
+            if artist_name:
+                liked_artists.add(artist_name)
+
+        if not liked_artists:
+            return jsonify({'message': 'User has not liked any songs yet'}), 400
+
+        # Find other tracks by the same artists
+        recommended_tracks = []
+        for artist_name in liked_artists:
+            artist_tracks = Track_collection.find({
+                'artists.name': artist_name,
+                'name': {'$nin': [liked_song['song'] for liked_song in current_user['likedSongs']]}
+            }).limit(5)  # Limit the number of recommended tracks per artist
+
+            recommended_tracks.extend(list(artist_tracks))
+
+        # Extract relevant information for the recommended tracks
+        recommendations = [{
+            'song_name': track['name'],
+            'artist': track['artists'][0]['name'] if 'artists' in track and track['artists'] else None
+        } for track in recommended_tracks]
+
+        return jsonify({'recommendations': recommendations})
+
+    except Exception as e:
+        return jsonify({'message': f'Error: {str(e)}'}), 500
+    
 
 #FRIENDSHIP ACTIVITY
 ############################
@@ -1695,6 +1743,11 @@ def like_playlist():
         existing_entry = next(
             (entry for entry in user.get('likedPlaylists', []) if entry.get('friend') == friend_username and entry.get('playlist_name') == playlist_name),
             None
+        )
+        # Increment the likes for the liked playlist
+        UserInfo_collection.update_one(
+            {'username': friend_username, 'playlists.playlist_name': playlist_name},
+            {'$inc': {'playlists.$.likes': 1}}
         )
 
         if existing_entry:
