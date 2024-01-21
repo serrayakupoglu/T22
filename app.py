@@ -742,7 +742,7 @@ def get_profile_endpoint():
             'username': target_user['username'],
             'followers': [str(follower) for follower in target_user['followers']],
             'following': [str(followee) for followee in target_user['following']],
-            'likedSongs': [str(song) for song in target_user['likedSongs']],
+            'likedSongs': [dict(entry) for entry in target_user['likedSongs']],
             'rated_songs': [dict(entry) for entry in target_user['rated_songs']],  # Convert to a list of dictionaries
             'playlists': [],
             'likedPlaylists': []
