@@ -527,7 +527,7 @@ def add_to_liked_songs():
             return jsonify({'message': 'Song and artist already in likedSongs'}), 400
 
         # Add the new entry to likedSongs
-        new_entry = {'song': song_name, 'artist': artist_name,'liked_at': datetime.utcnow()}
+        new_entry = {'song': song_name, 'artist': artist_name,'liked_at': format(datetime.utcnow())}
         UserInfo_collection.update_one({'username': username}, {'$push': {'likedSongs': new_entry}})
 
         return jsonify({'message': f'Song "{song_name}" by "{artist_name}" added to likedSongs'})
