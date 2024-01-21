@@ -870,9 +870,9 @@ def add_to_playlist():
         return jsonify({'message': f'Error: {str(e)}'}), 500
 
 ##################################### COLLABORATIVE PLAYLIST#########################
-# Endpoint to join a collaborative playlist
-@app.route('/join_collaborative_playlist', methods=['POST'])
-def join_collaborative_playlist():
+# Endpoint to create a collaborative playlist
+@app.route('/create_collaborative_playlist', methods=['POST'])
+def create_collaborative_playlist():
     try:
         # Get the current user from the session
         current_user = get_current_user()
@@ -890,36 +890,185 @@ def join_collaborative_playlist():
         CollaborativePlaylist_collection = db.CollaborativePlaylist
         UserInfo_collection = db.UserInfo
 
+        # Check if the playlist already exists
+        existing_playlist = CollaborativePlaylist_collection.find_one({'name': playlist_name})
+        if existing_playlist:
+            return jsonify({'message': f'Playlist "{playlist_name}" already exists'}), 400
+
+        # Create the collaborative playlist
+        playlist_data = {
+            'name': playlist_name,
+            'owner': [{'id': current_user['_id'], 'name': current_user['username']}],
+            'members': [{'id': current_user['_id'], 'name': current_user['username']}],
+            'created_at': format(datetime.utcnow()),
+            'songs': []  # You can extend this for collaborative songs
+        }
+
+        playlist_id = CollaborativePlaylist_collection.insert_one(playlist_data).inserted_id
+
+        # Update the user's playlists attribute
+        UserInfo_collection.update_one(
+            {'username': current_user['username']},
+            {'$push': {'playlists': {
+                'playlist_name': playlist_name,
+                'playlist_id': str(playlist_id),
+                'owner': [{'id': str(current_user['_id']), 'name': current_user['username']}],
+                'members': [{'id': str(current_user['_id']), 'name': current_user['username']}],
+                'songs': []
+            }}}
+        )
+
+        return jsonify({'message': f'Collaborative playlist "{playlist_name}" created successfully'})
+
+    except Exception as e:
+        return jsonify({'message': f'Error: {str(e)}'}), 500
+
+# Endpoint to invite users to a collaborative playlist
+@app.route('/invite_to_collaborative_playlist', methods=['POST'])
+def invite_to_collaborative_playlist():
+    try:
+        # Get the current user from the session
+        current_user = get_current_user()
+        if not current_user:
+            return jsonify({'message': 'User is not logged in'}), 401
+
+        # Get the playlist name and friend's username from the request
+        playlist_name = request.form.get('playlist_name')
+        friend_username = request.form.get('friend_username')
+        if not playlist_name or not friend_username:
+            return jsonify({'message': 'Playlist name or friend username is missing in the request'}), 400
+
+        # Connect to the database
+        client = connect_to_mongo()
+        db = client.MusicDB
+        CollaborativePlaylist_collection = db.CollaborativePlaylist
+        UserInfo_collection = db.UserInfo
+
         # Check if the playlist exists
         playlist = CollaborativePlaylist_collection.find_one({'name': playlist_name})
         if not playlist:
             return jsonify({'message': f'Playlist "{playlist_name}" does not exist'}), 404
 
-        # Check if the user is already in the playlist
-        if current_user['_id'] in playlist['members']:
-            return jsonify({'message': 'User is already in the playlist'}), 400
+        # Check if the user is the owner of the playlist
+        if (
+            playlist['owner'] and
+            current_user['_id'] != ObjectId(playlist['owner'][0]['id']) and
+            current_user['name'] != playlist['owner'][0]['name']
+        ): 
 
-        # Add the user to the playlist
+            return jsonify({'message': 'Only the owner can invite users to the playlist'}), 403
+
+        # Check if the friend exists
+        friend = UserInfo_collection.find_one({'username': friend_username})
+        if not friend:
+            return jsonify({'message': f'User "{friend_username}" not found'}), 404
+
+        # Check if the friend is already a member of the playlist
+        if friend['_id'] in [member['id'] for member in playlist.get('members', [])]:
+            return jsonify({'message': f'User "{friend_username}" is already a member of the playlist'}), 400
+
+
+        # Add the friend to the playlist
         CollaborativePlaylist_collection.update_one(
             {'_id': playlist['_id']},
-            {'$push': {'members': current_user['_id']}}
+            {'$push': {'members': {'id': friend['_id'], 'name': friend['username']}}}
+        )
+        # Get the updated list of members
+        updated_playlist = CollaborativePlaylist_collection.find_one({'_id': playlist['_id']})
+        member_details = []
+
+        for member_id in updated_playlist.get('members', []):
+            if member_id is not None:
+                # Extract user_id and user_name from the member_id dictionary
+                user_id = member_id.get('id', '')
+                user_name = member_id.get('name')
+                
+                if user_id:
+                    member_details.append({'id': str(user_id), 'name': user_name})
+
+        # Update the collaborative playlist in the user's playlists attribute
+        user_query = {'username': current_user['username'], 'playlists.playlist_name': playlist_name}
+        user_update = {'$set': {'playlists.$[].members': member_details}}
+
+        UserInfo_collection.update_one(user_query, user_update)
+
+        return jsonify({
+            'message': f'User "{friend_username}" invited to playlist "{playlist_name}" successfully',
+            'members': member_details
+        })
+
+
+    except Exception as e:
+        return jsonify({'message': f'Error: {str(e)}'}), 500
+
+
+# Endpoint to add a song to a collaborative playlist
+@app.route('/add_to_collaborative_playlist', methods=['POST'])
+def add_to_collaborative_playlist():
+    try:
+        # Get the current user from the session
+        current_user = get_current_user()
+        if not current_user:
+            return jsonify({'message': 'User is not logged in'}), 401
+
+        # Get the playlist name and song name from the request
+        playlist_name = request.form.get('playlist_name')
+        song_name = request.form.get('song_name')
+        if not playlist_name or not song_name:
+            return jsonify({'message': 'Playlist name or song name is missing in the request'}), 400
+
+        # Connect to the database
+        client = connect_to_mongo()
+        db = client.MusicDB
+        CollaborativePlaylist_collection = db.CollaborativePlaylist
+        Track_collection = db.Track
+        UserInfo_collection = db.UserInfo
+
+        # Check if the playlist exists
+        playlist = CollaborativePlaylist_collection.find_one({'name': playlist_name})
+        if not playlist:
+            return jsonify({'message': f'Playlist "{playlist_name}" does not exist'}), 404
+
+        # Check if the user is a member of the playlist
+        if current_user['_id'] not in [member['id'] for member in playlist.get('members', [])]:
+            return jsonify({'message': 'User is not a member of the playlist'}), 403
+
+        # Check if the song exists
+        song = Track_collection.find_one({'name': song_name})
+        if not song:
+            return jsonify({'message': f'Song "{song_name}" does not exist'}), 404
+
+        # Add the song to the playlist
+        CollaborativePlaylist_collection.update_one(
+            {'_id': playlist['_id']},
+            {'$push': {'songs': {'name': song_name, 'added_by': current_user['_id'], 'added_at': '{}'.format(datetime.utcnow())}}}
         )
 
         # Get the updated list of members
         updated_playlist = CollaborativePlaylist_collection.find_one({'_id': playlist['_id']})
         member_details = []
 
-        for member_id in updated_playlist['members']:
+        for member_id in updated_playlist.get('members', []):
             member = UserInfo_collection.find_one({'_id': member_id})
-            member_details.append({'id': str(member_id), 'name': member['username']})
+            if member:
+                member_details.append({'id': str(member_id), 'name': member['username']})
+
+        # Update the collaborative playlist in the user's playlist attribute
+        user_query = {'username': current_user['username'], 'playlists.playlist_name': playlist_name}
+        user_update = {'$set': {'playlists.$[].members': member_details, 'playlists.$[].songs': updated_playlist.get('songs', [])}}
+
+        UserInfo_collection.update_one(user_query, user_update)
 
         return jsonify({
-            'message': f'User joined playlist "{playlist_name}" successfully',
+            'message': f'Song "{song_name}" added to playlist "{playlist_name}" successfully',
             'members': member_details
         })
 
     except Exception as e:
         return jsonify({'message': f'Error: {str(e)}'}), 500
+
+
+
 @app.route('/get_all_tracks', methods=['GET'])
 def get_all_tracks():
     try:
