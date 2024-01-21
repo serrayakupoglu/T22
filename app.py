@@ -627,6 +627,58 @@ def remove_from_liked_songs():
         return jsonify({'message': f'Error: {str(e)}'}), 500
 
 
+# Endpoint to remove a track from the playlist
+@app.route('/remove_from_playlist', methods=['POST'])
+def remove_from_playlist():
+    try:
+        # Get the current user from the session
+        username = session.get('username')
+        if not username:
+            return jsonify({'message': 'User is not logged in'}), 400
+
+        # Get the track name and playlist name from the request body
+        track_name = request.form.get('track_name')
+        playlist_name = request.form.get('playlist_name')
+
+        if not track_name or not playlist_name:
+            return jsonify({'message': 'Required data is missing in the form data'}), 400
+
+        # Connect to the database
+        client = connect_to_mongo()
+        db = client.MusicDB
+        UserInfo_collection = db.UserInfo
+
+        # Check if the user exists
+        user = UserInfo_collection.find_one({'username': username})
+        if user is None:
+            return jsonify({'message': 'User not found'}), 404
+
+        # Check if the playlist exists within the user's playlists
+        playlist = next((pl for pl in user.get('playlists', []) if pl['playlist_name'] == playlist_name), None)
+        if not playlist:
+            return jsonify({'message': f'Playlist "{playlist_name}" not found in user\'s playlists'}), 404
+
+        # Check if the track exists within the playlist
+        track_exists = any(tr['track_name'] == track_name for tr in playlist.get('tracks', []))
+        if not track_exists:
+            return jsonify({'message': f'Track "{track_name}" not found in the playlist "{playlist_name}"'}), 404
+
+        # Remove the track from the playlist
+        playlist['tracks'] = [tr for tr in playlist['tracks'] if tr['track_name'] != track_name]
+
+        # Update the user's document with the modified playlists
+        result = UserInfo_collection.update_one(
+            {'username': username},
+            {'$set': {'playlists': user['playlists']}}
+        )
+
+        if result.modified_count == 1:
+            return jsonify({'message': f'Track "{track_name}" removed from the playlist "{playlist_name}" successfully'})
+        else:
+            return jsonify({'message': f'Failed to remove track "{track_name}" from the playlist "{playlist_name}"'})
+
+    except Exception as e:
+        return jsonify({'message': f'Error: {str(e)}'}), 500
 
 
 # Endpoint to get followees of a user by username
