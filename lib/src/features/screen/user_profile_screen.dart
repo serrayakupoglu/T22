@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:untitled1/src/features/common_widgets/body_text.dart';
 import 'package:untitled1/src/features/common_widgets/common_app_bar.dart';
-import 'package:untitled1/src/features/common_widgets/header_text.dart';
 import 'package:untitled1/src/features/controller/user_controller.dart';
 import 'package:untitled1/src/features/models/user.dart';
 import 'package:untitled1/src/features/service/storage_service.dart';
-import '../common_widgets/profile_buttons.dart';
-
 
 class UserProfile extends StatefulWidget {
   const UserProfile({Key? key}) : super(key: key);
@@ -34,7 +31,6 @@ class _UserProfileState extends State<UserProfile> {
       return null;
     }
   }
-
   Future<User?> updateData() async {
     String? username = await storageService.readSecureData('username');
     if (username != null) {
@@ -47,108 +43,130 @@ class _UserProfileState extends State<UserProfile> {
   @override
   Widget build(BuildContext context) {
     return RefreshIndicator(
-      onRefresh: () async {
-        print("refresh");
-        userData = updateData();
-        setState(() {});
-      },
+        onRefresh: () async {
+          setState(() {
+            userData = updateData();
+          });
+        },
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: SafeArea(
+            child: Column(
+              children: [
+                SizedBox(height: 20),
 
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        child: Column(
-          mainAxisSize: MainAxisSize.max,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            FutureBuilder(
-                future: userData,
-                builder: (context, snapshot) {
-                  if(snapshot.hasData && snapshot.data != null) {
-                    return Column(
-                      children: [
-                        Container(
-                            margin: const EdgeInsets.only(left: 15, top: 10),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.supervised_user_circle, color: Colors.white, size: 82),
-                                Column(
-                                  children: [
-                                    HeaderText(msg: "${snapshot.data!.name} ${snapshot.data!.surname}"),
-                                    BodyText(msg: "@${snapshot.data!.username}")
-                                  ],
-                                ),
-                              ],
-                            )
-                        ),
-                        Container(
-                          margin: const EdgeInsets.only(top: 10),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
-                            children: [
-                              GestureDetector(
-                                onTap: () {controller.navigateToFollowers(snapshot.data!.followers, snapshot.data!.followings, snapshot.data!.username);},
-                                child: HeaderText(msg: "Followers: ${snapshot.data!.followers.length}"),
-                              ),
-                              GestureDetector(
-                                onTap: () {
-                                  controller.navigateToFollowings(snapshot.data!.followings, snapshot.data!.followings, snapshot.data!.username);
-                                },
-                                child: HeaderText(msg: "Followings: ${snapshot.data!.followings.length}"),
-                              )
-                            ],
+                FutureBuilder<User?>(
+                  future: userData,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return  Container();
+                    } else if (snapshot.hasData && snapshot.data != null) {
+                      User user = snapshot.data!;
+                      return Column(
+                        children: [
+                          SizedBox(height: 40),
+                          const Icon(Icons.supervised_user_circle, color: Colors.white, size: 82),
+                          SizedBox(height: 10),
+                          Text(
+                            '@${user.username}',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green, // Text color green
+                            ),
                           ),
-                        ),
-                        Container(
-                          margin: const EdgeInsets.only(top: 10),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
-                            children: [
-                              GestureDetector(
-                                onTap: () {
-                                  controller.navigateToMyListsPage(context, snapshot.data!.username, true);
-                                },
-                                child: const HeaderText(msg: "My Lists"), // Placeholder for My Lists
-                              ),
-                              GestureDetector(
-                                onTap: () {
-                                  controller.navigateToAnalysis(snapshot.data!.username);
-                                },
-                                child: const HeaderText(msg: "Analysis"), // Placeholder for Analysis
-                              )
-                            ],
+                          Text(
+                            '${user.name} ${user.surname}',
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: Colors.green, // Text color green
+                            ),
                           ),
-                        ),
-                        Container(
-                          margin: const EdgeInsets.only(top: 10),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
-                            children: [
-                              GestureDetector(
-                                onTap: () {
-                                  controller.navigateToLikedSongsPage(context, snapshot.data!);
-                                },
-                                child: const HeaderText(msg: "Likings"), // Placeholder for My Lists
-                              ),
-                            ],
-                          ),
-                        ),
-
-
-                        Container(margin: EdgeInsets.only(top: 250),child: ProfileButton(buttonText: "Logout", onPressed: () {controller.logout(snapshot.data!.username);}),)
-                      ],
-
-                    );
-                  }
-
-                  else {
-                    return Container();
-                  }
-                }
-            )
-
-          ],
+                          SizedBox(height: 20),
+                          followerFollowingSection(user),
+                          SizedBox(height: 20),
+                          profileOption('My Lists', Icons.list, () {
+                            controller.navigateToMyListsPage(context, user.username, true);
+                          }),
+                          profileOption('Likings', Icons.favorite_border, () {
+                            controller.navigateToLikedSongsPage(context, user);
+                          }),
+                          profileOption('Analysis', Icons.analytics, () {
+                            controller.navigateToAnalysis(user.username);
+                          }),
+                          SizedBox(height: 20),
+                          logoutButton(context, user.username),
+                        ],
+                      );
+                    } else {
+                      return Text(
+                        'No user data available.',
+                        style: TextStyle(color: Colors.green), // Text color green
+                      );
+                    }
+                  },
+                ),
+              ],
+            ),
+          ),
         ),
-      )
+      );
+
+  }
+
+  Widget followerFollowingSection(User user) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        GestureDetector(
+          onTap: () => controller.navigateToFollowers(user.followers, user.followings, user.username),
+          child: Text(
+            'Followers: ${user.followers.length}',
+            style: TextStyle(
+              fontSize: 18,
+              color: Colors.green, // Text color green
+            ),
+          ),
+        ),
+        Text(
+          ' | ',
+          style: TextStyle(
+            fontSize: 18,
+            color: Colors.white, // Separator color
+          ),
+        ),
+        GestureDetector(
+          onTap: () => controller.navigateToFollowings(user.followings, user.followings, user.username),
+          child: Text(
+            'Following: ${user.followings.length}',
+            style: TextStyle(
+              fontSize: 18,
+              color: Colors.green, // Text color green
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget profileOption(String title, IconData icon, VoidCallback onTap) {
+    return ListTile(
+      leading: Icon(icon, color: Colors.green), // Icon color green
+      title: Text(title, style: TextStyle(color: Colors.green)), // Text color green
+      onTap: onTap,
+    );
+  }
+
+  Widget logoutButton(BuildContext context, String username) {
+    return ElevatedButton(
+      style: ElevatedButton.styleFrom(
+        primary: Colors.green, // Button color green
+        onPrimary: Colors.white,
+      ),
+      onPressed: () {
+        controller.logout(username);
+      },
+      child: Text('Logout'),
     );
   }
 }

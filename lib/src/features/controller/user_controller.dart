@@ -93,6 +93,11 @@ class UserController {
     return response;
   }
 
+  Future<bool> removeSongFromPlaylist(String songName, String playlistName) async {
+    final response = await _userService.removeSongFromPlaylist(songName, playlistName);
+    return response;
+  }
+
   Future<List<SearchUser>> searchUser(String username) async {
     return await _userService.searchUser(username);
   }
@@ -174,7 +179,7 @@ class UserController {
 
   void navigateToPlaylistContentPage(BuildContext context, List<Song> songList, String listName) {
     Navigator.of(context).push(MaterialPageRoute(builder: (context) {
-      return PlaylistContentPage(songList: songList, listName: listName);
+      return PlaylistContentPage(listOfSongs: songList, listName: listName);
     }));
   }
 

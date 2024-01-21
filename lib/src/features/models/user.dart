@@ -49,9 +49,11 @@ class User {
         // Extract the rating, handling the case when it's null
         var rating = songMap['rating'] ;
         rating = rating ?? -1;
+        var artist = songMap['artist'];
+        artist = artist ?? "";
         return {
           'song': songMap['song'],
-          'artist': songMap['artist'],
+          'artist': artist,
           'liked_at': likedAt,
           'rating': rating,
         };

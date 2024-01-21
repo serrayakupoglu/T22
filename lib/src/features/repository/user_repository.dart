@@ -111,6 +111,25 @@ class UserRepository {
     return response;
   }
 
+  Future<http.Response> removeSongFromPlaylist(String songName, String playlistName) async {
+    final url = Uri.parse('$kBaseUrl/remove_from_playlist');
+    final session = await storageService.readSecureData('session');
+    final response = await http.post(
+        url,
+        headers: {
+          'Authorization': 'Bearer $session',
+          'cookie': 'session=$session',
+        },
+        body: {
+          'track_name': songName,
+          'playlist_name': playlistName
+        }
+    );
+    return response;
+  }
+
+
+
   Future<http.Response> searchUser(String username) async {
     final url = Uri.parse('$kBaseUrl/search_user');
     print(username);

@@ -94,6 +94,15 @@ class UserService {
     return false;
   }
 
+
+  Future<bool> removeSongFromPlaylist(String songName, String playlistName) async {
+    final response = await _userRepository.removeSongFromPlaylist(songName, playlistName);
+    if(response.statusCode == 200) {
+      return true;
+    }
+    return false;
+  }
+
   Future<List<SearchUser>> searchUser(String username) async {
     final response = await _userRepository.searchUser(username);
 
