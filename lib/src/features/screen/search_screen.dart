@@ -280,28 +280,36 @@ class _SearchScreenState extends State<SearchScreen> {
                 padding: const EdgeInsets.fromLTRB(kOpeningButtonSidePadding, 0, kOpeningButtonSidePadding, kOpeningButtonSidePadding/4),
                 child: userList.isEmpty
                     ? const HeaderText(msg: "Search a User")
-                    : SongBox(
-                  artistName: "@${userList[index].username}",
-                  songName: "${userList[index].name} ${userList[index].surname}",
-                  onIconPressed: () {
-                    showModalBottomSheet(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return Wrap(
-                          children: <Widget>[
-                            ListTile(
-                              leading: Icon(Icons.person_add),
-                              title: Text('Follow ${userList[index].username}'),
-                              onTap: () {
-                                userController.followUser(userList[index].username);
-                                Navigator.pop(context);
-                              },
-                            ),
-                          ],
-                        );
-                      },
-                    );
-                  },
+                    : GestureDetector(
+                  onTap: () async {
+                    username = await storageService.readSecureData('username');
+                    User user = await userController.getUserProfile('$username');
+                    userController.navigateToAnotherUserProfile(userList[index].username, user.followings);
+                    },
+                  child: SongBox(
+                    artistName: "@${userList[index].username}",
+                    songName: "${userList[index].name} ${userList[index].surname}",
+                    onIconPressed: () {
+                      showModalBottomSheet(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return Wrap(
+                            children: <Widget>[
+                              ListTile(
+
+                                leading: Icon(Icons.person_add),
+                                title: Text('Follow ${userList[index].username}'),
+                                onTap: () {
+                                  userController.followUser(userList[index].username);
+                                  Navigator.pop(context);
+                                },
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                  ),
                 ),
               )
           ),

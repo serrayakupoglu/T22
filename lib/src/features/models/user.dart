@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:ffi';
 
 import 'package:untitled1/src/features/models/song.dart';
 class User {
@@ -20,7 +21,13 @@ class User {
     required this.playlists,
   });
 
+
   factory User.fromJson(Map<String, dynamic> json) {
+
+    String replaceNoneWithNull(String jsonString) {
+      return jsonString.replaceAll('None', 'null');
+    }
+
     var profileInfo = json['profile_info'];
 
     List<String> followers = List<String>.from(profileInfo['followers']);
@@ -29,22 +36,29 @@ class User {
         : [];
 
     List<Map<String, dynamic>> likedSongs = [];
-    
+
     if (profileInfo.containsKey('likedSongs')) {
       var likedSongsList = profileInfo['likedSongs'] as List<dynamic>;
       likedSongs = likedSongsList.map((song) {
-        var songMap = jsonDecode(song.replaceAll("'", '"'));
+        var cleanedSong = replaceNoneWithNull(song.replaceAll("'", '"'));
+        var songMap = jsonDecode(cleanedSong);
 
         // Convert the datetime string to a Dart DateTime object
         DateTime likedAt = DateTime.parse(songMap['liked_at']);
 
+        // Extract the rating, handling the case when it's null
+        var rating = songMap['rating'] ;
+        rating = rating ?? -1;
         return {
           'song': songMap['song'],
           'artist': songMap['artist'],
           'liked_at': likedAt,
+          'rating': rating,
         };
       }).toList();
     }
+
+
 
 
 

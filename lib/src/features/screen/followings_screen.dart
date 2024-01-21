@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:untitled1/src/features/common_widgets/common_app_bar.dart';
 import 'package:untitled1/src/features/controller/user_controller.dart';
+import 'package:untitled1/src/features/service/storage_service.dart';
 import '../constants.dart';
 class FollowingsPage extends StatefulWidget {
   final String currentUserName;
@@ -37,8 +38,10 @@ class _FollowingsPageState extends State<FollowingsPage> {
     bool isCurrentlyFollowing = isFollowing(username);
 
     if (isCurrentlyFollowing) {
-      _userController.unfollowUser(username).then((dbResult) {
+      _userController.unfollowUser(username).then((dbResult) async {
         if (dbResult == true) {
+          String? uname = await StorageService().readSecureData('username');
+          await _userController.updateUserProfile('$uname');
           setState(() {
             _currentFollowings.remove(username);
           });
@@ -47,8 +50,10 @@ class _FollowingsPageState extends State<FollowingsPage> {
         }
       });
     } else {
-      _userController.followUser(username).then((dbResult) {
+      _userController.followUser(username).then((dbResult) async {
         if (dbResult == true) {
+          String? uname = await StorageService().readSecureData('username');
+          await _userController.updateUserProfile('$uname');
           setState(() {
             _currentFollowings.add(username);
           });

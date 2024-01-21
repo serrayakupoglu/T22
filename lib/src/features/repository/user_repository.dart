@@ -17,14 +17,8 @@ class UserRepository {
       // Parse the JSON response and create a User object
       Map<String, dynamic> jsonResponse = json.decode(response.body);
       print(jsonResponse);
+
       User user = User.fromJson(jsonResponse);
-
-
-      for (int i = 0; i < user.playlists.length; i++) {
-        for (int j = 0; j < user.playlists[i].tracks.length; j++) {
-          print(user.playlists[i].tracks[j].songName);
-        }
-      }
 
       return user;
     } else {

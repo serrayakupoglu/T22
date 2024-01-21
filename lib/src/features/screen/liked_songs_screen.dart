@@ -26,6 +26,14 @@ class _LikedSongsPageState extends State<LikedSongsPage> {
     super.initState();
     userController = UserController(context: context);
     userData = widget.user;
+    fetchUserData();
+  }
+
+  fetchUserData () async {
+    userData = await userController.getUserProfile(widget.user.username);
+    setState(() {
+
+    });
   }
 
   @override
