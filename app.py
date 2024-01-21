@@ -524,16 +524,23 @@ def add_to_liked_songs():
         existing_entry = next((entry for entry in user['likedSongs'] if entry['song'] == song_name and entry['artist'] == artist_name), None)
 
         if existing_entry:
-            return jsonify({'message': 'Song and artist already in likedSongs'}), 400
+            # Song is already in likedSongs
+            if 'rating' in existing_entry:
+                # Song is rated
+                return jsonify({'message': f'Song "{song_name}" by "{artist_name}" is already in likedSongs with rating {existing_entry["rating"]}'})
+            else:
+                # Song is not rated
+                return jsonify({'message': f'Song "{song_name}" by "{artist_name}" is already in likedSongs but not rated'}), 400
 
         # Add the new entry to likedSongs
-        new_entry = {'song': song_name, 'artist': artist_name,'liked_at': format(datetime.utcnow())}
+        new_entry = {'song': song_name, 'artist': artist_name, 'liked_at':'{}'. format(datetime.utcnow())}
         UserInfo_collection.update_one({'username': username}, {'$push': {'likedSongs': new_entry}})
 
         return jsonify({'message': f'Song "{song_name}" by "{artist_name}" added to likedSongs'})
 
     except Exception as e:
         return jsonify({'message': f'Error: {str(e)}'}), 500
+
     
 @app.route('/remove_from_liked_songs', methods=['POST'])
 def remove_from_liked_songs():
@@ -599,26 +606,27 @@ def rate_song():
 
             # Check if the user has already rated the song
             existing_rating = UserInfo_collection.find_one(
-                {'username': current_user['username'], 'rated_songs': {song_name: {'$exists': True}}}
+                {'username': current_user['username'], 'likedSongs': {song_name: {'$exists': True}}}
             )
             if existing_rating:
-                return jsonify({'message': f'You have already rated the song {song_name}'}), 400
+                # Song is already in likedSongs
+                if 'rating' in existing_rating['likedSongs'][song_name]:
+                    # Song is already rated
+                    return jsonify({'message': f'You have already rated the song "{song_name}" by "{song["artists"][0]["name"]}" with {existing_rating["likedSongs"][song_name]["rating"]} stars'})
 
             # Add the rated song information to the user's document
             UserInfo_collection.update_one(
                 {'username': current_user['username']},
-                {'$push': {'rated_songs': {song_name: rating}}}
+                {'$push': {'likedSongs': {'song': song_name, 'artist': song['artists'][0]['name'], 'liked_at': format(datetime.utcnow()), 'rating': rating}}}
             )
 
-            return jsonify({'message': f'Successfully rated the song {song_name} with {rating} stars'})
+            return jsonify({'message': f'Successfully rated the song "{song_name}" by "{song["artists"][0]["name"]}" with {rating} stars'})
 
         else:
             return jsonify({'message': 'Invalid rating. Please provide a rating between 1 and 10'}), 400
 
     except Exception as e:
         return jsonify({'message': f'Error: {str(e)}'}), 500
-    
-
 def get_current_user():
     # Get the current user from the session
     username = session.get('username')
@@ -861,7 +869,57 @@ def add_to_playlist():
     except Exception as e:
         return jsonify({'message': f'Error: {str(e)}'}), 500
 
+##################################### COLLABORATIVE PLAYLIST#########################
+# Endpoint to join a collaborative playlist
+@app.route('/join_collaborative_playlist', methods=['POST'])
+def join_collaborative_playlist():
+    try:
+        # Get the current user from the session
+        current_user = get_current_user()
+        if not current_user:
+            return jsonify({'message': 'User is not logged in'}), 401
 
+        # Get the playlist name from the request
+        playlist_name = request.form.get('playlist_name')
+        if not playlist_name:
+            return jsonify({'message': 'Playlist name is missing in the request'}), 400
+
+        # Connect to the database
+        client = connect_to_mongo()
+        db = client.MusicDB
+        CollaborativePlaylist_collection = db.CollaborativePlaylist
+        UserInfo_collection = db.UserInfo
+
+        # Check if the playlist exists
+        playlist = CollaborativePlaylist_collection.find_one({'name': playlist_name})
+        if not playlist:
+            return jsonify({'message': f'Playlist "{playlist_name}" does not exist'}), 404
+
+        # Check if the user is already in the playlist
+        if current_user['_id'] in playlist['members']:
+            return jsonify({'message': 'User is already in the playlist'}), 400
+
+        # Add the user to the playlist
+        CollaborativePlaylist_collection.update_one(
+            {'_id': playlist['_id']},
+            {'$push': {'members': current_user['_id']}}
+        )
+
+        # Get the updated list of members
+        updated_playlist = CollaborativePlaylist_collection.find_one({'_id': playlist['_id']})
+        member_details = []
+
+        for member_id in updated_playlist['members']:
+            member = UserInfo_collection.find_one({'_id': member_id})
+            member_details.append({'id': str(member_id), 'name': member['username']})
+
+        return jsonify({
+            'message': f'User joined playlist "{playlist_name}" successfully',
+            'members': member_details
+        })
+
+    except Exception as e:
+        return jsonify({'message': f'Error: {str(e)}'}), 500
 @app.route('/get_all_tracks', methods=['GET'])
 def get_all_tracks():
     try:
