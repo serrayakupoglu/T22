@@ -637,10 +637,10 @@ def remove_from_playlist():
             return jsonify({'message': 'User is not logged in'}), 400
 
         # Get the track name and playlist name from the request body
-        track_name = request.form.get('track_name')
+        name = request.form.get('track_name')
         playlist_name = request.form.get('playlist_name')
 
-        if not track_name or not playlist_name:
+        if not name or not playlist_name:
             return jsonify({'message': 'Required data is missing in the form data'}), 400
 
         # Connect to the database
@@ -659,12 +659,12 @@ def remove_from_playlist():
             return jsonify({'message': f'Playlist "{playlist_name}" not found in user\'s playlists'}), 404
 
         # Check if the track exists within the playlist
-        track_exists = any(tr['track_name'] == track_name for tr in playlist.get('tracks', []))
+        track_exists = any(tr['name'] == name for tr in playlist.get('tracks', []))
         if not track_exists:
-            return jsonify({'message': f'Track "{track_name}" not found in the playlist "{playlist_name}"'}), 404
+            return jsonify({'message': f'Track "{name}" not found in the playlist "{playlist_name}"'}), 404
 
         # Remove the track from the playlist
-        playlist['tracks'] = [tr for tr in playlist['tracks'] if tr['track_name'] != track_name]
+        playlist['tracks'] = [tr for tr in playlist['tracks'] if tr['name'] != name]
 
         # Update the user's document with the modified playlists
         result = UserInfo_collection.update_one(
@@ -673,9 +673,9 @@ def remove_from_playlist():
         )
 
         if result.modified_count == 1:
-            return jsonify({'message': f'Track "{track_name}" removed from the playlist "{playlist_name}" successfully'})
+            return jsonify({'message': f'Track "{name}" removed from the playlist "{playlist_name}" successfully'})
         else:
-            return jsonify({'message': f'Failed to remove track "{track_name}" from the playlist "{playlist_name}"'})
+            return jsonify({'message': f'Failed to remove track "{name}" from the playlist "{playlist_name}"'})
 
     except Exception as e:
         return jsonify({'message': f'Error: {str(e)}'}), 500
