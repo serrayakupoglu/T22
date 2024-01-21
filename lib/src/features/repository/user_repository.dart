@@ -16,7 +16,7 @@ class UserRepository {
     if (response.statusCode == 200) {
       // Parse the JSON response and create a User object
       Map<String, dynamic> jsonResponse = json.decode(response.body);
-
+      print(jsonResponse);
       User user = User.fromJson(jsonResponse);
 
 
@@ -88,6 +88,22 @@ class UserRepository {
     final url = Uri.parse('$kBaseUrl/add_to_liked_songs');
     final session = await storageService.readSecureData('session');
     print(songName);
+    final response = await http.post(
+      url,
+      headers: {
+        'Authorization': 'Bearer $session',
+        'cookie': 'session=$session',
+      },
+      body: {
+        'song_name': songName
+      }
+    );
+    return response;
+  }
+
+  Future<http.Response> removeSongFromLikedList(String songName) async {
+    final url = Uri.parse('$kBaseUrl/remove_from_liked_songs');
+    final session = await storageService.readSecureData('session');
     final response = await http.post(
       url,
       headers: {

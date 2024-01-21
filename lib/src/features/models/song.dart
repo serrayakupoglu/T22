@@ -4,6 +4,7 @@ class Song {
   List<Map<String, String>> artists;
   String songName;
   int popularity;
+  DateTime? likedAt; // Add likedAt property
 
   Song({
     required this.albumId,
@@ -11,6 +12,7 @@ class Song {
     required this.artists,
     required this.songName,
     required this.popularity,
+    this.likedAt, // Update constructor to include likedAt
   });
 
   factory Song.fromJson(Map<String, dynamic> json) {
@@ -37,6 +39,9 @@ class Song {
       artists: parsedArtists,
       songName: json['name'].toString(),
       popularity: json['popularity'] as int,
+      likedAt: json['liked_at'] != null
+          ? DateTime.parse(json['liked_at'])
+          : null, // Initialize likedAt to null if not present in JSON
     );
   }
 

@@ -82,8 +82,14 @@ class UserController {
   }
 
   Future<bool> addSongToLikedList (String username, String songName) async {
-    print(songName);
+
     final response = await _userService.addSongToLikedList(username, songName);
+    if (response == true) updateUserProfile(username);
+    return response;
+  }
+
+  Future<bool> removeSongFromLikedList(String songName) async {
+    final response = await _userService.removeSongFromLikedList(songName);
     return response;
   }
 

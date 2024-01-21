@@ -79,6 +79,16 @@ class UserService {
     final response = await _userRepository.addSongToLikedList(username, songName);
 
     if(response.statusCode == 200) {
+
+      return true;
+    }
+    return false;
+  }
+
+  Future<bool> removeSongFromLikedList(String songName) async {
+    final response = await _userRepository.removeSongFromLikedList(songName);
+
+    if(response.statusCode == 200) {
       return true;
     }
     return false;

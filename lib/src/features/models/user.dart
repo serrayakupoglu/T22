@@ -1,14 +1,13 @@
 import 'dart:convert';
 
 import 'package:untitled1/src/features/models/song.dart';
-
 class User {
   final String username;
   final String name;
   final String surname;
   final List<String> followers;
   final List<String> followings;
-  final List<Map<String, String>> likedSongs;
+  final List<Map<String, dynamic>> likedSongs; // Correct type to Map<String, dynamic>
   final List<Playlist> playlists;
 
   User({
@@ -29,15 +28,28 @@ class User {
         ? List<String>.from(profileInfo['following'])
         : [];
 
-    List<Map<String, String>> likedSongs = [];
-
+    List<Map<String, dynamic>> likedSongs = [];
+    
     if (profileInfo.containsKey('likedSongs')) {
       var likedSongsList = profileInfo['likedSongs'] as List<dynamic>;
       likedSongs = likedSongsList.map((song) {
         var songMap = jsonDecode(song.replaceAll("'", '"'));
-        return Map<String, String>.from(songMap);
+
+        // Convert the datetime string to a Dart DateTime object
+        DateTime likedAt = DateTime.parse(songMap['liked_at']);
+
+        return {
+          'song': songMap['song'],
+          'artist': songMap['artist'],
+          'liked_at': likedAt,
+        };
       }).toList();
     }
+
+
+
+
+
 
     List<Playlist> playlists = [];
 
@@ -79,5 +91,4 @@ class Playlist {
     required this.name,
     required this.tracks,
   });
-
 }
