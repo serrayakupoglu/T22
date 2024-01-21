@@ -293,7 +293,8 @@ def signup():
             'following': [],
             'likedSongs': [],
             'rated_songs': [],
-            'playlists': []
+            'playlists': [],
+            'likedPlaylists': []
         }
         insert_result = UserInfo_collection.insert_one(new_user)
 
@@ -520,26 +521,76 @@ def add_to_liked_songs():
         if artist_name is None:
             return jsonify({'message': f'Artist not found for song "{song_name}"'}), 404
 
-        # Check if the song and artist combination is already in likedSongs
-        existing_entry = next((entry for entry in user['likedSongs'] if entry['song'] == song_name and entry['artist'] == artist_name), None)
-
-        if existing_entry:
-            # Song is already in likedSongs
-            if 'rating' in existing_entry:
-                # Song is rated
-                return jsonify({'message': f'Song "{song_name}" by "{artist_name}" is already in likedSongs with rating {existing_entry["rating"]}'})
-            else:
-                # Song is not rated
-                return jsonify({'message': f'Song "{song_name}" by "{artist_name}" is already in likedSongs but not rated'}), 400
-
-        # Add the new entry to likedSongs
-        new_entry = {'song': song_name, 'artist': artist_name, 'liked_at':'{}'. format(datetime.utcnow())}
+        # Add the new entry to likedSongs with a null rating
+        new_entry = {'song': song_name, 'artist': artist_name, 'liked_at': format(datetime.utcnow()), 'rating': None}
         UserInfo_collection.update_one({'username': username}, {'$push': {'likedSongs': new_entry}})
 
         return jsonify({'message': f'Song "{song_name}" by "{artist_name}" added to likedSongs'})
 
     except Exception as e:
         return jsonify({'message': f'Error: {str(e)}'}), 500
+
+# Endpoint to rate a song
+@app.route('/rate_song', methods=['POST'])
+def rate_song():
+    # Check if the user is logged in
+    current_user = get_current_user()
+    if current_user is None:
+        return jsonify({'message': 'User not logged in'}), 401
+
+    try:
+        # Get the song name and rating from the request body
+        song_name = request.form.get('song_name')
+        rating = int(request.form.get('rating'))
+
+        if not song_name or rating is None:
+            return jsonify({'message': 'Song name or rating is missing in the request body'}), 400
+
+        # Connect to the database
+        client = connect_to_mongo()
+        db = client.MusicDB
+        UserInfo_collection = db.UserInfo
+        Track_collection = db.Track
+
+        # Check if the user has already liked the song
+        existing_entry = next((entry for entry in current_user['likedSongs'] if entry['song'] == song_name), None)
+
+        # Fetch the artist from the track
+        track_info = Track_collection.find_one({'name': song_name})
+        if track_info:
+            artist_name = track_info['artists'][0]['name'] if 'artists' in track_info and track_info['artists'] else None
+        else:
+            artist_name = None
+
+        if existing_entry:
+            # Song is already in likedSongs, update the entry with the rating
+            existing_entry['rating'] = rating
+            existing_entry['artist'] = artist_name
+        else:
+            # Song is not in likedSongs, add a new entry with the rating
+            new_entry = {'song': song_name, 'artist': artist_name, 'liked_at': format(datetime.utcnow()), 'rating': rating}
+            current_user['likedSongs'].append(new_entry)
+
+        # Add the rated song information to the user's document in the rated_songs list
+        UserInfo_collection.update_one(
+            {'username': current_user['username']},
+            {'$push': {'rated_songs': {song_name: rating}}}
+        )
+
+        # Update the user's document with the modified likedSongs
+        result = UserInfo_collection.update_one(
+            {'username': current_user['username']},
+            {'$set': {'likedSongs': current_user['likedSongs']}}
+        )
+
+        if result.modified_count == 1:
+            return jsonify({'message': f'Successfully rated the song {song_name} by {artist_name} with {rating} stars'})
+        else:
+            return jsonify({'message': f'Failed to update rating for song {song_name}'}), 500
+
+    except Exception as e:
+        return jsonify({'message': f'Error: {str(e)}'}), 500
+
 
     
 @app.route('/remove_from_liked_songs', methods=['POST'])
@@ -575,103 +626,7 @@ def remove_from_liked_songs():
     except Exception as e:
         return jsonify({'message': f'Error: {str(e)}'}), 500
 
-# Endpoint to rate a song
-@app.route('/rate_song', methods=['POST'])
-def rate_song():
-    # Check if the user is logged in
-    current_user = get_current_user()
-    if current_user is None:
-        return jsonify({'message': 'User not logged in'}), 401
 
-    try:
-        # Get the song name and rating from the request body
-        song_name = request.form.get('song_name')
-        rating = int(request.form.get('rating'))
-
-        if not song_name or rating is None:
-            return jsonify({'message': 'Song name or rating is missing in the request body'}), 400
-
-        # Validate the rating (between 1 and 10)
-        if 1 <= rating <= 10:
-            # Connect to the database
-            client = connect_to_mongo()
-            db = client.MusicDB
-            Track_collection = db.Track
-            UserInfo_collection = db.UserInfo
-
-            # Check if the song exists in the Track_collection
-            song = Track_collection.find_one({'name': song_name})
-            if song is None:
-                return jsonify({'message': 'Song not found in the track collection'}), 404
-
-            # Check if the user has already rated the song
-            existing_rating = UserInfo_collection.find_one(
-                {'username': current_user['username'], 'likedSongs': {song_name: {'$exists': True}}}
-            )
-            if existing_rating:
-                # Song is already in likedSongs
-                if 'rating' in existing_rating['likedSongs'][song_name]:
-                    # Song is already rated
-                    return jsonify({'message': f'You have already rated the song "{song_name}" by "{song["artists"][0]["name"]}" with {existing_rating["likedSongs"][song_name]["rating"]} stars'})
-
-            # Add the rated song information to the user's document
-            UserInfo_collection.update_one(
-                {'username': current_user['username']},
-                {'$push': {'likedSongs': {'song': song_name, 'artist': song['artists'][0]['name'], 'liked_at': format(datetime.utcnow()), 'rating': rating}}}
-            )
-
-            return jsonify({'message': f'Successfully rated the song "{song_name}" by "{song["artists"][0]["name"]}" with {rating} stars'})
-
-        else:
-            return jsonify({'message': 'Invalid rating. Please provide a rating between 1 and 10'}), 400
-
-    except Exception as e:
-        return jsonify({'message': f'Error: {str(e)}'}), 500
-def get_current_user():
-    # Get the current user from the session
-    username = session.get('username')
-    if username:
-        # Connect to the database
-        client = connect_to_mongo()
-        db = client.MusicDB
-        UserInfo_collection = db.UserInfo
-
-        # Find the user in the database
-        user = UserInfo_collection.find_one({'username': username})
-
-        return user
-
-    return None
-##################################
-# Endpoint to get followers of a user by username
-@app.route('/get_followers', methods=['GET'])
-def get_followers_endpoint():
-    try:
-        # Get the target username from the request parameters
-        target_username = request.args.get('username')
-
-        if not target_username:
-            return jsonify({'message': 'Target username is missing in the request parameters'}), 400
-
-        # Connect to the database
-        client = connect_to_mongo()
-        db = client.MusicDB
-        UserInfo_collection = db.UserInfo
-
-        # Find the target user in the database
-        target_user = UserInfo_collection.find_one({'username': target_username})
-
-        # Check if the target user exists
-        if target_user is None:
-            return jsonify({'message': 'Target user not found'}), 404
-
-        # Return the followers as an array of strings
-        followers = [str(follower) for follower in target_user['followers']]
-
-        return jsonify({'followers': followers})
-
-    except Exception as e:
-        return jsonify({'message': f'Error: {str(e)}'}), 500
 
 
 # Endpoint to get followees of a user by username
@@ -738,6 +693,7 @@ def get_profile_endpoint():
             'following': [str(followee) for followee in target_user['following']],
             'likedSongs': [str(song) for song in target_user['likedSongs']],
             'playlists': [{'playlist_name': playlist['playlist_name'], 'tracks': playlist['tracks']} for playlist in target_user['playlists']]
+            
         }
 
         return jsonify({'profile_info': profile_info})
