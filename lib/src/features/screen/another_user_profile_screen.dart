@@ -22,7 +22,6 @@ class AnotherUserProfile extends StatefulWidget {
 class _AnotherUserProfileState extends State<AnotherUserProfile> {
   late Future<User?> userData;
   late UserController controller;
-  bool isFollowing = true;
 
   @override
   void initState() {
@@ -46,102 +45,108 @@ class _AnotherUserProfileState extends State<AnotherUserProfile> {
       backgroundColor: const Color(kOpeningBG),
       body: RefreshIndicator(
         onRefresh: () async {
-          print("refresh");
-          userData = updateData(widget.username);
-          setState(() {});
+          setState(() {
+            userData = updateData(widget.username);
+          });
         },
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          child: Column(
-            mainAxisSize: MainAxisSize.max,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              FutureBuilder(
-                future: userData,
-                builder: (context, snapshot) {
-                  if (snapshot.hasData && snapshot.data != null) {
-                    return Column(
-                      children: [
-                        Container(
-                          margin: EdgeInsets.only(left: 15, top: 10),
-                          child: Row(
-                            children: [
-                              Icon(Icons.supervised_user_circle, color: Colors.white, size: 82),
-                              Column(
-                                children: [
-                                  HeaderText(msg: "${snapshot.data!.name} ${snapshot.data!.surname}"),
-                                  BodyText(msg: "@${snapshot.data!.username}")
-                                ],
-                              ),
-                            ],
-                          ),
+          child: SafeArea(
+            child: FutureBuilder<User?>(
+              future: userData,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Container(); // Show loading indicator
+                } else if (snapshot.hasData && snapshot.data != null) {
+                  User user = snapshot.data!;
+                  return Column(
+                    children: [
+                      SizedBox(height: 20),
+                      const Icon(Icons.supervised_user_circle, color: Colors.white, size: 82),
+                      SizedBox(height: 10),
+                      Text(
+                        '@${user.username}',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green, // Text color green
                         ),
-                        Container(
-                          margin: EdgeInsets.only(top: 10),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
-                            children: [
-                              GestureDetector(
-                                onTap: () {
-                                  controller.navigateToFollowers(snapshot.data!.followers, widget.baseFollowings, snapshot.data!.username);
-                                },
-                                child: HeaderText(msg: "Followers: ${snapshot.data!.followers.length}"),
-                              ),
-                              GestureDetector(
-                                onTap: () {
-                                  controller.navigateToFollowings(snapshot.data!.followings, widget.baseFollowings, snapshot.data!.username);
-                                },
-                                child: HeaderText(msg: "Followings: ${snapshot.data!.followings.length}"),
-                              )
-                            ],
-                          ),
+                      ),
+                      Text(
+                        '${user.name} ${user.surname}',
+                        style: TextStyle(
+                          fontSize: 18,
+                          color: Colors.green, // Text color green
                         ),
-                        Container(
-                          margin: EdgeInsets.only(top: 10),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
-                            children: [
-                              GestureDetector(
-                                onTap: () {
-                                  controller.navigateToMyListsPage(context, snapshot.data!.username, false);
-                                },
-                                child: HeaderText(msg: "Lists"), // Placeholder for My Lists
-                              ),
-                              GestureDetector(
-                                onTap: () {
-                                  controller.navigateToAnalysis(widget.username);
-                                },
-                                child: HeaderText(msg: "Analysis"), // Placeholder for Analysis
-                              )
-                            ],
-                          ),
-                        ),
-                        Container(
-                          margin: EdgeInsets.only(top: 10),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
-                            children: [
-                              GestureDetector(
-                                onTap: () {
-                                  controller.navigateOthersToLikedSongsPage(context, snapshot.data!);
-                                },
-                                child: HeaderText(msg: "Likings"), // Placeholder for My Lists
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    );
-                  } else {
-                    return Container();
-                  }
-                },
-              ),
-            ],
+                      ),
+                      SizedBox(height: 20),
+                      followerFollowingSection(user),
+                      SizedBox(height: 20),
+                      profileOption('Lists', Icons.list, () {
+                        controller.navigateToMyListsPage(context, user.username, false);
+                      }),
+                      profileOption('Likings', Icons.favorite_border, () {
+                        controller.navigateOthersToLikedSongsPage(context, user);
+                      }),
+                      profileOption('Analysis', Icons.analytics, () {
+                        controller.navigateToAnalysis(user.username);
+                      }),
+                    ],
+                  );
+                } else {
+                  return Text(
+                    'No user data available.',
+                    style: TextStyle(color: Colors.green), // Text color green
+                  );
+                }
+              },
+            ),
           ),
         ),
-      )
+      ),
+    );
+  }
+
+  Widget followerFollowingSection(User user) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        GestureDetector(
+          onTap: () => controller.navigateToFollowers(user.followers, widget.baseFollowings, user.username),
+          child: Text(
+            'Followers: ${user.followers.length}',
+            style: TextStyle(
+              fontSize: 18,
+              color: Colors.green, // Text color green
+            ),
+          ),
+        ),
+        Text(
+          ' | ',
+          style: TextStyle(
+            fontSize: 18,
+            color: Colors.white, // Separator color
+          ),
+        ),
+        GestureDetector(
+          onTap: () => controller.navigateToFollowings(user.followings, widget.baseFollowings, user.username),
+          child: Text(
+            'Following: ${user.followings.length}',
+            style: TextStyle(
+              fontSize: 18,
+              color: Colors.green, // Text color green
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget profileOption(String title, IconData icon, VoidCallback onTap) {
+    return ListTile(
+      leading: Icon(icon, color: Colors.green), // Icon color green
+      title: Text(title, style: TextStyle(color: Colors.green)), // Text color green
+      onTap: onTap,
     );
   }
 }

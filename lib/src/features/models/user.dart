@@ -40,23 +40,22 @@ class User {
     if (profileInfo.containsKey('likedSongs')) {
       var likedSongsList = profileInfo['likedSongs'] as List<dynamic>;
       likedSongs = likedSongsList.map((song) {
-        var cleanedSong = replaceNoneWithNull(song.replaceAll("'", '"'));
-        var songMap = jsonDecode(cleanedSong);
 
         // Convert the datetime string to a Dart DateTime object
-        DateTime likedAt = DateTime.parse(songMap['liked_at']);
+        DateTime likedAt = DateTime.parse(song['liked_at']);
 
         // Extract the rating, handling the case when it's null
-        var rating = songMap['rating'] ;
+        var rating = song['rating'] ;
         rating = rating ?? -1;
-        var artist = songMap['artist'];
+        var artist = song['artist'];
         artist = artist ?? "";
         return {
-          'song': songMap['song'],
+          'song': song['song'],
           'artist': artist,
           'liked_at': likedAt,
           'rating': rating,
         };
+
       }).toList();
     }
 

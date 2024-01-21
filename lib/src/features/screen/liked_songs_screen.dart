@@ -6,6 +6,9 @@ import 'package:untitled1/src/features/constants.dart';
 import 'package:untitled1/src/features/controller/user_controller.dart';
 import 'package:untitled1/src/features/models/user_cache.dart';
 
+import '../common_widgets/rating_dialog.dart';
+import '../common_widgets/slidable_song_box_liked_song.dart';
+import '../models/song.dart';
 import '../models/user.dart';
 
 class LikedSongsPage extends StatefulWidget {
@@ -56,139 +59,146 @@ class _LikedSongsPageState extends State<LikedSongsPage> {
         itemCount: userData.likedSongs.length,
         itemBuilder: (context, index) {
           Map<dynamic, dynamic> song = userData.likedSongs[index];
-          return SongBox(songName: song['song'], artistName: song['artist'], onIconPressed: (){
+          return LikedSongSlidableSongBox(
+            child: SongBox(
+                songName: song['song'],
+                artistName: song['artist'],
 
-                showModalBottomSheet(
-                    backgroundColor: Colors.green.shade400,
-                    isScrollControlled: false,
-                    context: context,
-                    builder: (BuildContext context) {
-                  return Container(
-                    constraints: BoxConstraints(
-                      maxHeight: MediaQuery.of(context).size.height * 0.11,
-                    ),
-                    child: LikedSongBottomSheet(
-                      song: song,
-                      likeSongFunction: () async {
-                        // Capture the context before entering the async function
-                        BuildContext contextCopy = context;
+            ),
 
-                        bool response = await userController.removeSongFromLikedList(song['song']);
-                        String username = widget.user.username;
-                        await userController.updateUserProfile(widget.user.username);
-                        userData = UserProfileCache.getUserProfile(username)!;
-                        callSetState();
-                        String msg = response
-                            ? 'Song Successfully Removed From The List'
-                            : 'Failed To Remove The Song';
-                        String titleMsg = response ? 'Success' : 'Error';
-                        if(context.mounted) {
-                          showDialog(
-                            context: contextCopy, // Use the captured context
-                            builder: (BuildContext context) {
-                              return AlertDialog(
-                                title: Text(titleMsg),
-                                content: Text(msg), // Display the result message
-                                actions: <Widget>[
-                                  TextButton(
-                                    child: const Text('OK'),
-                                    onPressed: () {
+            removeButtonFunction: (context) async {
+              BuildContext contextCopy = context;
+              await removeSongFromLikedListAndShowDialog(contextCopy, song['song']);
+            },
 
-                                      if(context.mounted){Navigator.of(context).pop();}
+            addButtonFunction: (context) async {
+              await addToPlaylistAndShowDialog(context, song['song']);
+            },
 
-                                    },
-                                  ),
-                                ],
-                              );
-                            },
-                          );
-                        }
+            rateButtonFunction: (context) async {
+              Song s = Song(albumId: '', albumName: '', artists: [], songName: song['song'], popularity: 0, );
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return RatingDialog(song: s);
+                },
+              );
+            },
 
-                      },
-                      addSongFunction: () async {
-                        showDialog(
-                          context: context,
-                          builder: (BuildContext context) {
-                            return AlertDialog(
-                              title: Text('Select Playlist'),
-                              content: Container(
-                                width: double.maxFinite,
-                                height: 300,
-                                child: ListView.builder(
-                                  itemCount: userData.playlists.length,
-                                  itemBuilder: (context, index) {
-                                    String playlistName = userData.playlists[index].name;
-
-                                    return ListTile(
-                                      title: Text(playlistName),
-                                      onTap: () async {
-                                        await userController.addToPlaylist(song['song'], playlistName).then((success) {
-                                          if(success) {
-                                            userController.updateUserProfile(userData.username);
-                                            showDialog(
-                                              context: context,
-                                              builder: (BuildContext context) {
-                                                return AlertDialog(
-                                                  title: const Text('Success'),
-                                                  content: const Text('Song Successfully Added To The Playlist!'),
-                                                  actions: <Widget>[
-                                                    TextButton(
-                                                      child: const Text('OK'),
-                                                      onPressed: () {
-                                                        Navigator.of(context).pop();
-                                                        Navigator.of(context).pop(); // Close the previous dialog
-                                                      },
-                                                    ),
-                                                  ],
-                                                );
-                                              },
-                                            );
-                                          }
-                                          else {
-                                            showDialog(
-                                              context: context,
-                                              builder: (BuildContext context) {
-                                                return AlertDialog(
-                                                  title: Text('Failed'),
-                                                  content: Text('Failed To Add.'),
-                                                  actions: <Widget>[
-                                                    TextButton(
-                                                      child: Text('Retry'),
-                                                      onPressed: () {
-                                                        Navigator.of(context).pop();
-                                                      },
-                                                    ),
-                                                    TextButton(
-                                                      child: Text('Cancel'),
-                                                      onPressed: () {
-                                                        Navigator.of(context).pop();
-                                                        Navigator.of(context).pop(); // Close the previous dialog
-                                                      },
-                                                    ),
-                                                  ],
-                                                );
-                                              },
-                                            );
-                                          }
-                                        } );
-
-                                      },
-                                    );
-                                  },
-                                ),
-                              ),
-                            );
-                          },
-                        );
-                      },
-                    ),
-
-
-                  );
-                });
-          },);
+          );
         },
       ),
     );
   }
+
+  Future<void> removeSongFromLikedListAndShowDialog(BuildContext context, String songName) async {
+    bool response = await userController.removeSongFromLikedList(songName);
+    String username = widget.user.username;
+    await userController.updateUserProfile(username);
+    userData = UserProfileCache.getUserProfile(username)!;
+    callSetState();
+    String msg = response
+        ? 'Song Successfully Removed From The List'
+        : 'Failed To Remove The Song';
+    String titleMsg = response ? 'Success' : 'Error';
+
+    if (context.mounted) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text(titleMsg),
+            content: Text(msg),
+            actions: <Widget>[
+              TextButton(
+                child: const Text('OK'),
+                onPressed: () {
+                  if (context.mounted) {
+                    Navigator.of(context).pop();
+                  }
+                },
+              ),
+            ],
+          );
+        },
+      );
+    }
+  }
+
+  Future<void> addToPlaylistAndShowDialog(BuildContext context, String songName) async {
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Select Playlist'),
+          content: Container(
+            width: double.maxFinite,
+            height: 300,
+            child: ListView.builder(
+              itemCount: userData.playlists.length,
+              itemBuilder: (context, index) {
+                String playlistName = userData.playlists[index].name;
+
+                return ListTile(
+                  title: Text(playlistName),
+                  onTap: () async {
+                    await userController.addToPlaylist(songName, playlistName).then((success) {
+                      if (success) {
+                        userController.updateUserProfile(userData.username);
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              title: const Text('Success'),
+                              content: const Text('Song Successfully Added To The Playlist!'),
+                              actions: <Widget>[
+                                TextButton(
+                                  child: const Text('OK'),
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                    Navigator.of(context).pop(); // Close the previous dialog
+                                  },
+                                ),
+                              ],
+                            );
+                          },
+                        );
+                      } else {
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              title: Text('Failed'),
+                              content: Text('Failed To Add.'),
+                              actions: <Widget>[
+                                TextButton(
+                                  child: Text('Retry'),
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                  },
+                                ),
+                                TextButton(
+                                  child: Text('Cancel'),
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                    Navigator.of(context).pop(); // Close the previous dialog
+                                  },
+                                ),
+                              ],
+                            );
+                          },
+                        );
+                      }
+                    });
+                  },
+                );
+              },
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+
 }
