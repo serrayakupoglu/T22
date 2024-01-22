@@ -1449,6 +1449,37 @@ def add_track():
 
 
 ##################################### ANALYSİS#############################
+    # Endpoint to get the last added songs and top songs from different artists in the last day
+# Endpoint to get 10 songs from different artists added in the last day
+@app.route('/get_last_day_songs', methods=['GET'])
+def get_last_day_songs():
+    try:
+        # Connect to the database
+        client = connect_to_mongo()
+        db = client.MusicDB
+        Track_collection = db.Track
+
+        # Calculate the timestamp for 24 hours ago
+        last_day_timestamp = datetime.utcnow() - timedelta(days=1)
+
+       # Fetch 10 songs from different artists added in the last day
+        last_day_songs = Track_collection.aggregate([
+            {'$match': {'added_at': {'$gte': last_day_timestamp.strftime("%Y-%m-%d %H:%M:%S")}}},
+            {'$group': {'_id': '$artists', 'song': {'$first': '$name'}}},
+            {'$project': {'song_name': '$song', 'artist_name': {'$arrayElemAt': ['$_id.name', 0]}, 'genre': {'$arrayElemAt': ['$_id.genres', 0]}}},
+            {'$limit': 10}
+        ])
+
+        # Convert the cursor to a list for easier JSON serialization
+        last_day_songs_list = list(last_day_songs)
+
+        # You can customize the response format based on your requirements
+        response_data = {
+            'last_day_songs': [{'genre': song.get('genre', 'Unknown'), 'artist_name': song['artist_name'], 'song_name': song['song_name']} for song in last_day_songs_list]
+        }
+        return response_data
+    except Exception as e:
+        return jsonify({'message': f'Error: {str(e)}'}), 500
 # Endpoint to get the higher-rated genre
 
 @app.route('/get_higher_rated_genre', methods=['GET'])
@@ -1521,7 +1552,7 @@ def get_higher_rated_genre():
 def get_genre_percentage():
     try:
         # Get the username from the body
-        username = request.form.get('username')
+        username = request.args.get('username')
          # Connect to the database
         client = connect_to_mongo()
         db = client.MusicDB
