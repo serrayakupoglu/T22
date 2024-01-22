@@ -4,6 +4,7 @@ import 'package:untitled1/src/features/screen/followers_screen.dart';
 import 'package:untitled1/src/features/screen/followings_screen.dart';
 import 'package:untitled1/src/features/screen/opening_screen.dart';
 import 'package:untitled1/src/features/screen/playlists_screen.dart';
+import 'package:untitled1/src/features/screen/recommended_playlist_screen.dart';
 import 'package:untitled1/src/features/service/storage_service.dart';
 import '../models/recommended_song.dart';
 import '../models/search_user.dart';
@@ -184,7 +185,11 @@ class UserController {
     }));
   }
 
-
+  void navigateToRecommendedPlaylistPage(BuildContext context, String listName) {
+    Navigator.of(context).push(MaterialPageRoute(builder: (context) {
+      return RecommendedPlaylistScreen(playlistName: listName);
+    }));
+  }
 
 }
 

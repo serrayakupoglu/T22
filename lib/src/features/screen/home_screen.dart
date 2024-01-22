@@ -146,30 +146,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 }
               },
             ),
-            FutureBuilder<List<PlaylistRecommendation>>(
-              future: relaxingPlaylist,
-              builder: (BuildContext context, AsyncSnapshot<List<PlaylistRecommendation>> snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(child: CircularProgressIndicator());
-                } else if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return Center(child: Text('No recommendations available.'));
-                } else {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: snapshot.data!.map((recommendation) {
-                      return Card(
-                        child: ListTile(
-                          title: Text(recommendation.artist),
-                          subtitle: Text(recommendation.songName),
-                        ),
-                      );
-                    }).toList(),
-                  );
-                }
+            GestureDetector(
+              child: Text('playlist'),
+              onTap: () {
+                userController.navigateToRecommendedPlaylistPage(context, 'playlist');
               },
-            )
+            ),
+
 
           ],
         ),
