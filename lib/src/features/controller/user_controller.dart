@@ -71,6 +71,7 @@ class UserController {
   }
 
   Future<void> logout (String username) async {
+    print('object2');
     final success = await _userService.logout(username);
     if(success == true) {
       storageService.deleteSecureData('username');

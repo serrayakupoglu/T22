@@ -63,7 +63,9 @@ class _LikedSongsPageState extends State<LikedSongsPage> {
             child: SongBox(
                 songName: song['song'],
                 artistName: song['artist'],
-
+                onIconPressed: (){
+                  print(song['liked_at']);
+                },
             ),
 
             removeButtonFunction: (context) async {

@@ -147,7 +147,7 @@ class _HomeScreenState extends State<HomeScreen> {
               },
             ),
             FutureBuilder<List<PlaylistRecommendation>>(
-              future: playlist,
+              future: relaxingPlaylist,
               builder: (BuildContext context, AsyncSnapshot<List<PlaylistRecommendation>> snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return Center(child: CircularProgressIndicator());
