@@ -260,31 +260,38 @@ def get_artist_info_from_db(artist_name):
         # Handle the exception appropriately (e.g., log the error)
         print(f"Error in get_artist_info_from_db: {str(e)}")
         return None
+# Endpoint to get artist profile information by artist name
 @app.route('/get_artist_profile', methods=['GET'])
-def get_artist_profile():
+def get_artist_profile_endpoint():
     try:
-        artist_name = request.form.get('artist_name')
+        # Get the target artist name from the request parameters
+        target_artist_name = request.form.get('artist_name')
 
-        if not artist_name:
-            return jsonify({'message': 'Artist name is missing in the request parameters'}), 400
+        if not target_artist_name:
+            return jsonify({'message': 'Target artist name is missing in the request parameters'}), 400
 
-        # Fetch artist information from the database
-        artist_info = get_artist_info_from_db(artist_name)
+        # Connect to the database
+        client = connect_to_mongo()
+        db = client.MusicDB
+        Artist_collection = db.Artist
 
-        if not artist_info:
-            return jsonify({'message': 'Artist not found'}), 404
+        # Find the target artist in the database
+        target_artist = Artist_collection.find_one({'name': target_artist_name})
 
-        # Fetch artist image
-        artist_image_content = get_artist_image(artist_name)
+        # Check if the target artist exists
+        if target_artist is None:
+            return jsonify({'message': 'Target artist not found'}), 404
 
-        if not artist_image_content:
-            return jsonify({'message': 'Image not found'}), 404
+        artist_profile_info = {
+            'name': target_artist['name'],
+            'genres': target_artist.get('genres', []),
+            'popularity': target_artist.get('popularity', 0),
+            'followers': target_artist.get('followers', 0)
+        
+            
+        }
 
-        # Return the artist profile as JSON along with the image
-        return jsonify({
-            'artist_info': artist_info,
-            'artist_image': artist_image_content
-        })
+        return jsonify({'artist_profile_info': artist_profile_info})
 
     except Exception as e:
         return jsonify({'message': f'Error: {str(e)}'}), 500
