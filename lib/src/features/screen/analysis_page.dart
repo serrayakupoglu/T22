@@ -1,18 +1,14 @@
-
-import 'package:charts_flutter_new/flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:untitled1/src/features/common_widgets/common_app_bar.dart';
-import 'package:untitled1/src/features/common_widgets/genre_percentage_chart.dart';
 import 'package:untitled1/src/features/common_widgets/header_text.dart';
-import 'package:untitled1/src/features/common_widgets/song_box.dart';
-import 'package:untitled1/src/features/constants.dart';
 import 'package:untitled1/src/features/controller/user_controller.dart';
-import 'package:untitled1/src/features/models/user.dart';
+import 'package:untitled1/src/features/repository/user_repository.dart';
 import '../common_widgets/analysis_box.dart';
 import '../common_widgets/pie_widget.dart';
 import '../models/genre_percentage.dart';
 import '../models/top_rated.dart';
-import '../constants.dart';
+import '../models/user_mood_model.dart';
+
 class AnalysisPage extends StatefulWidget{
   final String username;
 
@@ -28,7 +24,7 @@ class _AnalysisPageState extends State<AnalysisPage> {
   late Future<TopRated> mostLikedGenre;
   late Future<int> mostLikedYear;
   late Future<GenrePercentage> genrePercentages;
-
+  late Future<UserSongs> moodSongs;
   @override
   void initState() {
     super.initState();
@@ -36,6 +32,8 @@ class _AnalysisPageState extends State<AnalysisPage> {
     mostLikedGenre = fetchMostLikedGenre();
     mostLikedYear = fetchMostLikedYear();
     genrePercentages = fetchGenrePercentage();
+    moodSongs = fetchMoodData();
+    UserRepository().analyzeUserMode();
   }
 
   Future<TopRated> fetchMostLikedGenre() async {
@@ -49,6 +47,9 @@ class _AnalysisPageState extends State<AnalysisPage> {
     return userController.getGenrePercentage(widget.username);
   }
 
+  Future<UserSongs> fetchMoodData() async {
+    return userController.analyzeUserMode();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -64,54 +65,79 @@ class _AnalysisPageState extends State<AnalysisPage> {
                 return AnalysisBox(
                   headerText: "Most Liked Genre: ${snapshot.data!.higherRatedGenre.toUpperCase()}",
                   innerWidget: Text(
+                    style: const TextStyle(color: Colors.green),
                     'Avg Rating: ${snapshot.data!.averageRating}',
                   ),
                 );
-              } else {
-                return HeaderText(msg: "Data Is Loading...");
+              }
+              else {
+                return const HeaderText(msg: "");
               }
             },
           ),
 
 
-          // FutureBuilder<int>(
-          //   future: mostLikedYear,
-          //   builder: (context, snapshot) {
-          //     if (snapshot.hasData) {
-          //       return AnalysisBox(
-          //         //innerText: "Average Year Of Likings: ${snapshot.data!}",
-          //       );
-          //     } else {
-          //       return HeaderText(msg: "Data Is Loading...");
-          //     }
-          //   },
-          // ),
-          // FutureBuilder<GenrePercentage>(
-          //   future: genrePercentages, // Assuming getGenrePercentage returns GenrePercentage
-          //   builder: (context, snapshot) {
-          //     if (snapshot.connectionState == ConnectionState.waiting) {
-          //       return HeaderText(msg: "Data Is Loading...");
-          //     } else if (snapshot.hasError) {
-          //       return HeaderText(msg: "Error: ${snapshot.error}");
-          //     } else {
-          //       GenrePercentage genrePercentage = snapshot.data!;
-          //
-          //       // Access the data within GenrePercentage
-          //       Map<String, double> data = genrePercentage.data;
-          //
-          //       return Column(
-          //         children: [
-          //           // Display the Pie Chart using the PieChartWidget class
-          //           PieChartWidget(data),
-          //           // Display additional information or customize the UI as needed
-          //
-          //         ],
-          //       );
-          //     }
-          //   },
-          // ),
+          FutureBuilder<int>(
+            future: mostLikedYear,
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                return AnalysisBox(
+                  headerText: 'Average Year Of Likings',
+                  innerWidget: Text('${snapshot.data!}',style: const TextStyle(color: Colors.green),),
+                );
+              } else {
+                return HeaderText(msg: "");
+              }
+            },
+          ),
+          FutureBuilder<GenrePercentage>(
+            future: genrePercentages, // Assuming getGenrePercentage returns GenrePercentage
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return HeaderText(msg: "");
+              } else if (snapshot.hasError) {
+                return HeaderText(msg: "Error: ${snapshot.error}");
+              } else {
+                GenrePercentage genrePercentage = snapshot.data!;
+                // Access the data within GenrePercentage
+                Map<String, double> data = genrePercentage.data;
+                return AnalysisBox(headerText: 'Genre Percentages', innerWidget: PieChartWidget(data));
+              }
+            },
+          ),
+        FutureBuilder<UserSongs>(
+          future: moodSongs, // Assuming moodSongs is a Future<UserSongs>
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return HeaderText(msg: "");
+            } else if (snapshot.hasError) {
+              return HeaderText(msg: "Error: ${snapshot.error}");
+            } else {
+                UserSongs userSongs = snapshot.data!;
+                String msg = userSongs.message;
+                List<SongMood> happySongs = userSongs.happySongs;
+                List<SongMood> sadSongs = userSongs.sadSongs;
+                return AnalysisBox(
+                    headerText: 'Mood Analysis',
+                    innerWidget: Text(msg,style: const TextStyle(color: Colors.green),)
+                );
+              }
+            },
+          )
         ],
       ),
+    );
+  }
+  Widget buildSongListWidget(List<SongMood> songs) {
+    return ListView.builder(
+      itemCount: songs.length,
+      itemBuilder: (context, index) {
+        SongMood song = songs[index];
+        return ListTile(
+          title: Text(song.songName),
+          subtitle: Text('Danceability: ${song.danceability}, Energy: ${song.energy}'),
+        );
+      },
     );
   }
 }

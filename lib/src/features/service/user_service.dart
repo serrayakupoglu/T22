@@ -11,6 +11,7 @@ import '../models/recommended_song.dart';
 import '../models/search_user.dart';
 import '../models/top_rated.dart';
 import '../models/user.dart';
+import '../models/user_mood_model.dart';
 import '../repository/user_repository.dart';
 
 class UserService {
@@ -128,6 +129,11 @@ class UserService {
 
   Future<GenrePercentage> getGenrePercentage(String username) async {
     final response = await _userRepository.getGenrePercentage(username);
+    return response;
+  }
+
+  Future<UserSongs> analyzeUserMode() async {
+    final response = await _userRepository.analyzeUserMode();
     return response;
   }
 

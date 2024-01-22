@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import '../constants.dart';
 import '../models/genre_percentage.dart';
 import '../models/user.dart';
+import '../models/user_mood_model.dart';
 import '../service/storage_service.dart';
 
 
@@ -170,8 +171,24 @@ class UserRepository {
       print('Error: ${response.statusCode} - ${response.body}');
       return Future.error(1);
     }
+  }
 
+  Future<UserSongs> analyzeUserMode() async {
+    final url = Uri.parse('$kBaseUrl/analyze_user_mode');
+    final session = await storageService.readSecureData('session');
+    final response = await http.get(
+        url,
+        headers: {
+          'Authorization': 'Bearer $session',
+          'cookie': 'session=$session',
+        });
 
+    if (response.statusCode == 200) {
+      UserSongs userSongs = UserSongs.fromJson(json.decode(response.body));
+      return userSongs;
+    } else {
+      return Future.error(2);
+    }
   }
 
   Future<http.Response> recommendSong() async {
@@ -187,7 +204,7 @@ class UserRepository {
   }
 
   Future<http.Response> recommendSongFromFriends() async {
-    final url = Uri.parse('$kBaseUrl/recommend_last_liked_song_from_friend');
+    final url = Uri.parse('$kBaseUrl/recommend_last_liked_song_from_first_friend');
     final session = await storageService.readSecureData('session');
     final response = await http.get(
         url,

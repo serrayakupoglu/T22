@@ -13,6 +13,7 @@ import '../models/song.dart';
 import '../models/top_rated.dart';
 import '../models/user.dart';
 import '../models/user_cache.dart';
+import '../models/user_mood_model.dart';
 import '../screen/analysis_page.dart';
 import '../screen/another_user_list.dart';
 
@@ -120,7 +121,12 @@ class UserController {
   Future<GenrePercentage> getGenrePercentage(String username) async {
     final response = await _userService.getGenrePercentage(username);
     return response;
-}
+  }
+
+  Future<UserSongs> analyzeUserMode() async {
+    final response = await _userService.analyzeUserMode();
+    return response;
+  }
 
   Future<RecommendedSong> recommendSong() async {
     final response = await _userService.recommendSong();
