@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:untitled1/src/features/common_widgets/body_text.dart';
+import 'package:untitled1/src/features/controller/song_controller.dart';
 import 'package:untitled1/src/features/controller/user_controller.dart';
 import 'package:untitled1/src/features/models/recommendations_cache.dart';
 import 'package:untitled1/src/features/models/recommended_song.dart';
 import '../models/friend_recommended_song.dart';
+import '../models/playlist_recommendation_instance.dart';
 
 
 class HomeScreen extends StatefulWidget {
@@ -15,12 +17,18 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   late UserController userController;
+  late SongController songController;
   late Future<RecommendedSong?> song;
   late Future<FriendSong?> friendSong;
+  late Future<List<PlaylistRecommendation>> relaxingPlaylist;
+  late Future<List<PlaylistRecommendation>> energeticPlaylist;
+  late Future<List<PlaylistRecommendation>> playlist;
+
 
   @override
   void initState() {
     userController = UserController(context: context);
+    songController = SongController(context);
     fetchData();
     super.initState();
   }
@@ -41,6 +49,28 @@ class _HomeScreenState extends State<HomeScreen> {
       friendSong =  RecommendationsCache.getRecommendation('friendSong');
     }
 
+    if(!RecommendationsCache.containsRecommendation('relaxingPlaylist')) {
+      relaxingPlaylist = songController.recommendRelaxingPlaylist();
+      RecommendationsCache.setRecommendation('relaxingPlaylist', relaxingPlaylist);
+    } else {
+      relaxingPlaylist = RecommendationsCache.getRecommendation('relaxingPlaylist');
+    }
+
+    if(!RecommendationsCache.containsRecommendation('energeticPlaylist')) {
+      energeticPlaylist = songController.recommendEnergeticPlaylist();
+      RecommendationsCache.setRecommendation('energeticPlaylist', energeticPlaylist);
+    } else {
+      energeticPlaylist = RecommendationsCache.getRecommendation('energeticPlaylist');
+    }
+
+    if(!RecommendationsCache.containsRecommendation('playlist')) {
+      playlist = songController.recommendPlaylist();
+      RecommendationsCache.setRecommendation('playlist', playlist);
+    } else {
+      playlist = RecommendationsCache.getRecommendation('playlist');
+    }
+
+
   }
 
   @override
@@ -51,10 +81,12 @@ class _HomeScreenState extends State<HomeScreen> {
         RecommendationsCache.setRecommendation('recommendedSong', song);
         friendSong = userController.recommendSongFromFriends();
         RecommendationsCache.setRecommendation('friendSong', friendSong);
+        relaxingPlaylist = songController.recommendRelaxingPlaylist();
+        RecommendationsCache.setRecommendation('relaxingPlaylist', relaxingPlaylist);
         setState(() {});
       },
       child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
+
         child: Column(
           children: [
             FutureBuilder<RecommendedSong?>(
@@ -113,7 +145,32 @@ class _HomeScreenState extends State<HomeScreen> {
                   return Container();
                 }
               },
+            ),
+            FutureBuilder<List<PlaylistRecommendation>>(
+              future: playlist,
+              builder: (BuildContext context, AsyncSnapshot<List<PlaylistRecommendation>> snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return Center(child: Text('No recommendations available.'));
+                } else {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: snapshot.data!.map((recommendation) {
+                      return Card(
+                        child: ListTile(
+                          title: Text(recommendation.artist),
+                          subtitle: Text(recommendation.songName),
+                        ),
+                      );
+                    }).toList(),
+                  );
+                }
+              },
             )
+
           ],
         ),
       ),

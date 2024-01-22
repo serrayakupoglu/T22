@@ -3,6 +3,7 @@ import 'package:untitled1/src/features/screen/forgot_pass/forgot_pass_screen_fir
 import 'package:untitled1/src/features/screen/user_profile_screen.dart';
 import 'package:untitled1/src/features/service/song_service.dart';
 import 'package:untitled1/src/features/service/storage_service.dart';
+import '../models/playlist_recommendation_instance.dart';
 import '../models/song.dart';
 import '../models/song_input.dart';
 import '../service/sing_in_service.dart';
@@ -25,6 +26,18 @@ class SongController {
   Future<bool> addSongManually(SongData songData) async {
     final response = await _service.addSongManually(songData);
     return response;
+  }
+
+  Future<List<PlaylistRecommendation>> recommendRelaxingPlaylist() async {
+    return await _service.recommendRelaxingPlaylist();
+  }
+
+  Future<List<PlaylistRecommendation>> recommendEnergeticPlaylist() async {
+    return await _service.recommendEnergeticPlaylist();
+  }
+
+  Future<List<PlaylistRecommendation>> recommendPlaylist() async {
+    return await _service.recommendPlaylist();
   }
 
 }

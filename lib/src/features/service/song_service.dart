@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:untitled1/src/features/models/song.dart';
 import 'package:untitled1/src/features/repository/song_repository.dart';
 import '../constants.dart';
+import '../models/playlist_recommendation_instance.dart';
 import '../models/song_input.dart';
 
 class SongService {
@@ -34,4 +35,15 @@ class SongService {
     }
   }
 
+  Future<List<PlaylistRecommendation>> recommendRelaxingPlaylist() async {
+    return await _repository.recommendRelaxingPlaylist();
+  }
+
+  Future<List<PlaylistRecommendation>> recommendEnergeticPlaylist() async {
+    return await _repository.recommendEnergeticPlaylist();
+  }
+
+  Future<List<PlaylistRecommendation>> recommendPlaylist() async {
+    return await _repository.recommendPlaylist();
+  }
 }

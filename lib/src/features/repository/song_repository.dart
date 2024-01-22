@@ -1,7 +1,10 @@
+import 'dart:convert';
+
 import 'package:http/http.dart' as http;
 import 'package:untitled1/src/features/constants.dart';
 import 'package:untitled1/src/features/service/storage_service.dart';
 
+import '../models/playlist_recommendation_instance.dart';
 import '../models/song_input.dart';
 
 class SongRepository {
@@ -75,4 +78,87 @@ class SongRepository {
 
   }
 
+  Future<List<PlaylistRecommendation>> recommendRelaxingPlaylist() async {
+    final url = Uri.parse('$kBaseUrl/recommend_relaxing_playlist');
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      final dynamic responseData = json.decode(response.body);
+
+      if (responseData is Map<String, dynamic> &&
+          responseData.containsKey("recommendations")) {
+        final List<dynamic> data = responseData["recommendations"];
+
+        List<PlaylistRecommendation> playlistRecommendations = data
+            .map((json) =>
+            PlaylistRecommendation.fromJson(json))
+            .toList();
+
+        return playlistRecommendations;
+      } else {
+        throw Exception('Unexpected response format. Expected a Map with "recommendations" key.');
+      }
+    } else {
+      throw Exception('Failed to load relaxing playlist recommendations');
+    }
+  }
+
+  Future<List<PlaylistRecommendation>> recommendEnergeticPlaylist() async {
+    final url = Uri.parse('$kBaseUrl/recommend_energetic_playlist');
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      final dynamic responseData = json.decode(response.body);
+
+      if (responseData is Map<String, dynamic> &&
+          responseData.containsKey("recommendations")) {
+        final List<dynamic> data = responseData["recommendations"];
+
+        List<PlaylistRecommendation> playlistRecommendations = data
+            .map((json) =>
+            PlaylistRecommendation.fromJson(json))
+            .toList();
+
+        return playlistRecommendations;
+      } else {
+        throw Exception('Unexpected response format. Expected a Map with "recommendations" key.');
+      }
+    } else {
+      throw Exception('Failed to load relaxing playlist recommendations');
+    }
+  }
+
+  Future<List<PlaylistRecommendation>> recommendPlaylist() async {
+    final url = Uri.parse('$kBaseUrl/recommend_playlist');
+    final session = await storageService.readSecureData('session');
+    final response = await http.get(
+      url,
+      headers: {
+        'Authorization': 'Bearer $session',
+        'cookie': 'session=$session',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final dynamic responseData = json.decode(response.body);
+
+      if (responseData is Map<String, dynamic> &&
+          responseData.containsKey("recommendations")) {
+        final List<dynamic> data = responseData["recommendations"];
+
+        List<PlaylistRecommendation> playlistRecommendations = data
+            .map((json) =>
+            PlaylistRecommendation.fromJson(json))
+            .toList();
+
+        return playlistRecommendations;
+      } else {
+        throw Exception('Unexpected response format. Expected a Map with "recommendations" key.');
+      }
+    } else {
+      throw Exception('Failed to load playlist recommendations');
+    }
+  }
+
 }
+

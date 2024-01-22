@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:untitled1/src/features/common_widgets/common_app_bar.dart';
 import 'package:untitled1/src/features/common_widgets/slidable_song_box.dart';
 import 'package:untitled1/src/features/common_widgets/song_box.dart';
 import 'package:untitled1/src/features/constants.dart';
 import 'package:untitled1/src/features/controller/user_controller.dart';
 import 'package:untitled1/src/features/service/storage_service.dart';
-
 import '../models/song.dart';
-import '../models/user.dart';
+
 
 class PlaylistContentPage extends StatefulWidget {
   final List<Song> listOfSongs;
