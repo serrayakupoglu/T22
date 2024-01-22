@@ -652,11 +652,17 @@ def add_to_liked_songs():
         db = client.MusicDB
         UserInfo_collection = db.UserInfo
         Track_collection = db.Track
-        
+
         # Check if the user exists
         user = UserInfo_collection.find_one({'username': username})
         if user is None:
             return jsonify({'message': 'User not found'}), 404
+
+        # Check if the song is already in the likedSongs
+        existing_entry = next((entry for entry in user['likedSongs'] if entry['song'] == song_name), None)
+
+        if existing_entry:
+            return jsonify({'message': 'Song already in likedSongs'}), 400
 
         # Search for the song in the Track collection to get its artist
         track = Track_collection.find_one({'name': song_name})
@@ -678,6 +684,7 @@ def add_to_liked_songs():
 
     except Exception as e:
         return jsonify({'message': f'Error: {str(e)}'}), 500
+
 
 # Endpoint to rate a song
 @app.route('/rate_song', methods=['POST'])
