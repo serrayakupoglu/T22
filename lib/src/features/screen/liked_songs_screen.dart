@@ -64,7 +64,13 @@ class _LikedSongsPageState extends State<LikedSongsPage> {
                 songName: song['song'],
                 artistName: song['artist'],
                 onIconPressed: (){
-                  print(song['liked_at']);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+
+                      content: Text('Liked at: ${song['liked_at'].day.toString().padLeft(2, '0')}/${song['liked_at'].month.toString().padLeft(2, '0')}/${song['liked_at'].year}'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
                 },
             ),
 
