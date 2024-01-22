@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request, session
 from datetime import timedelta,datetime
-
+from flask import send_file
 
 import certifi
 import requests
@@ -137,15 +137,157 @@ def convert_track_format(input_json):
 
     return output_json
 ######################################
+############## ARTIST PART##################
+# Define the Spotify API endpoint for searching artists
+SPOTIFY_SEARCH_API = "https://api.spotify.com/v1/search"
 
+# Function to search for an artist by name and get the artist ID
+def get_artist_id(artist_name, access_token):
+    headers = {"Authorization": f"Bearer {access_token}"}
+    params = {"q": artist_name, "type": "artist"}
+    response = requests.get(SPOTIFY_SEARCH_API, headers=headers, params=params)
+    result = response.json()
+    artists = result.get('artists', {}).get('items', [])
+    if artists:
+        return artists[0]['id']
+    return None
 
+ # Function to fetch artist information from Spotify using the artist ID
+def get_artist_info(artist_id, access_token):
+    headers = {"Authorization": f"Bearer {access_token}"}
+    artist_url = f"https://api.spotify.com/v1/artists/{artist_id}"
+    response = requests.get(artist_url, headers=headers)
+    return response.json()
 
+# Function to add artist information to the database
+def add_artist_to_db(artist_info, client):
+    db = client.MusicDB
+    Artist_collection = db.Artist
+    Artist_collection.insert_one(artist_info)
 
+# Route to add artist information to the database
+@app.route('/add_artist_to_db/<artist_name>')
+def add_artist_info_to_db(artist_name):
+    try:
+        client = connect_to_mongo()
+        access_token = get_spotify_token()
 
+        # Search for the artist ID using the artist name
+        artist_id = get_artist_id(artist_name, access_token)
 
+        if artist_id:
+            # Fetch artist information from Spotify using the artist ID
+            artist_info = get_artist_info(artist_id, access_token)
 
+            # Extract relevant attributes from the artist_info
+            name = artist_info.get('name')
+            genres = artist_info.get('genres')
+            popularity = artist_info.get('popularity')
+            followers = artist_info.get('followers', {}).get('total')
+            images = artist_info.get('images', [])
 
+            # Create a new dictionary with the desired attributes
+            filtered_artist_info = {
+                'name': name,
+                'genres': genres,
+                'popularity': popularity,
+                'followers': followers,
+                'images': images
+            }
 
+            # Add the filtered_artist_info to the database
+            add_artist_to_db(filtered_artist_info, client)
+
+            return 'Success'
+        else:
+            return 'Artist not found on Spotify'
+
+    except Exception as e:
+        print(f"Error: {e}")
+        return 'Failed'
+
+import io 
+# Route to get the artist image
+@app.route('/get_artist_image/<artist_name>')
+def get_artist_image(artist_name):
+    try:
+        client = connect_to_mongo()
+        access_token = get_spotify_token()
+
+        # Search for the artist ID using the artist name
+        artist_id = get_artist_id(artist_name, access_token)
+
+        if artist_id:
+            # Fetch artist information from Spotify using the artist ID
+            artist_info = get_artist_info(artist_id, access_token)
+
+            # Extract the first image URL (you might want to handle multiple images)
+            image_url = artist_info.get('images', [{}])[0].get('url', '')
+
+            if image_url:
+                # Fetch the image data
+                response = requests.get(image_url)
+
+                # Check if the request was successful
+                if response.status_code == 200:
+                    # Set content type as image/jpeg (you may need to adjust based on the actual image format)
+                    return send_file(io.BytesIO(response.content), mimetype='image/jpeg')
+                else:
+                    return 'Failed to fetch artist image from Spotify'
+
+            else:
+                return 'No image URL found for the artist'
+
+        else:
+            return 'Artist not found on Spotify'
+
+    except Exception as e:
+        print(f"Error: {e}")
+        return 'Failed'
+
+def get_artist_info_from_db(artist_name):
+    try:
+        client = connect_to_mongo()
+        db = client.MusicDB
+        Artist_collection = db.Artist
+
+        # Assume artist_name is a unique identifier in your database
+        artist_info = Artist_collection.find_one({'name': artist_name}, {'_id': 0})
+
+        return artist_info
+
+    except Exception as e:
+        # Handle the exception appropriately (e.g., log the error)
+        print(f"Error in get_artist_info_from_db: {str(e)}")
+        return None
+@app.route('/get_artist_profile', methods=['GET'])
+def get_artist_profile():
+    try:
+        artist_name = request.form.get('artist_name')
+
+        if not artist_name:
+            return jsonify({'message': 'Artist name is missing in the request parameters'}), 400
+
+        # Fetch artist information from the database
+        artist_info = get_artist_info_from_db(artist_name)
+
+        if not artist_info:
+            return jsonify({'message': 'Artist not found'}), 404
+
+        # Fetch artist image
+        artist_image_content = get_artist_image(artist_name)
+
+        if not artist_image_content:
+            return jsonify({'message': 'Image not found'}), 404
+
+        # Return the artist profile as JSON along with the image
+        return jsonify({
+            'artist_info': artist_info,
+            'artist_image': artist_image_content
+        })
+
+    except Exception as e:
+        return jsonify({'message': f'Error: {str(e)}'}), 500
 
 
 # MongoDB Atlas Part
