@@ -7,6 +7,8 @@ import '../constants.dart';
 import 'home_screen.dart';
 
 class HomePage extends StatefulWidget {
+  const HomePage({super.key});
+
   @override
   State<StatefulWidget> createState() => _HomePageState();
 }
