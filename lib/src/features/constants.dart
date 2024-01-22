@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-const String kBaseUrl = "http://192.168.1.29:105";
+const String kBaseUrl = "http://192.168.1.39:105";
 const String kIconPath = 'lib/src/assets/my_icon.png';
 const String kFontMetrisch = "Metrisch";
 const double kHeaderMsgSize = 24;

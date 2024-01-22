@@ -6,7 +6,7 @@ import 'package:untitled1/src/features/controller/user_controller.dart';
 import 'package:untitled1/src/features/models/recommendations_cache.dart';
 import 'package:untitled1/src/features/service/storage_service.dart';
 
-import '../SongBoxWithoutIcon.dart';
+import '../common_widgets/song_box_without_icon.dart';
 import '../common_widgets/rating_dialog.dart';
 import '../common_widgets/slidable_song_box_recommended_playlist.dart';
 import '../constants.dart';

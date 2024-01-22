@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../constants.dart';
+import 'artist_image_widget.dart';
 
 class SongBox extends StatelessWidget {
   final String songName;
@@ -18,6 +19,8 @@ class SongBox extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
+          CircularImageFromUrlWidget(artistName: artistName),
+          const SizedBox(width: 8,),
           Expanded(child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

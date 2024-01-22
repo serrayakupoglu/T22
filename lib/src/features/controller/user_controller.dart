@@ -15,6 +15,7 @@ import '../models/user_cache.dart';
 import '../screen/analysis_page.dart';
 import '../screen/another_user_list.dart';
 import '../screen/another_user_profile_screen.dart';
+import '../screen/another_user_profile_screen_2.dart';
 import '../screen/liked_songs_screen.dart';
 import '../screen/playlist_content_screen.dart';
 import '../service/user_service.dart';
