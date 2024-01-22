@@ -4,6 +4,7 @@ import 'package:untitled1/src/features/controller/song_controller.dart';
 import 'package:untitled1/src/features/controller/user_controller.dart';
 import 'package:untitled1/src/features/models/recommendations_cache.dart';
 import 'package:untitled1/src/features/models/recommended_song.dart';
+import 'package:untitled1/src/features/repository/user_repository.dart';
 import 'package:untitled1/src/features/service/storage_service.dart';
 import '../models/friend_recommended_song.dart';
 import '../models/playlist_recommendation_instance.dart';
@@ -242,6 +243,7 @@ class _HomeScreenState extends State<HomeScreen> {
           GestureDetector(
             onTap: () {
               // Replace 'Your Playlist Name' with the actual playlist name you want to pass
+
               userController.navigateToRecommendedPlaylistPage(context, 'playlist');
             },
             child: const Text(

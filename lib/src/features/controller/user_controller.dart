@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:untitled1/src/features/models/friend_recommended_song.dart';
+import 'package:untitled1/src/features/models/genre_percentage.dart';
 import 'package:untitled1/src/features/screen/followers_screen.dart';
 import 'package:untitled1/src/features/screen/followings_screen.dart';
 import 'package:untitled1/src/features/screen/opening_screen.dart';
@@ -14,8 +15,9 @@ import '../models/user.dart';
 import '../models/user_cache.dart';
 import '../screen/analysis_page.dart';
 import '../screen/another_user_list.dart';
-import '../screen/another_user_profile_screen.dart';
 
+
+import '../screen/another_user_profile_screen.dart';
 import '../screen/liked_songs_screen.dart';
 import '../screen/playlist_content_screen.dart';
 import '../service/user_service.dart';
@@ -115,6 +117,11 @@ class UserController {
     return response;
   }
 
+  Future<GenrePercentage> getGenrePercentage(String username) async {
+    final response = await _userService.getGenrePercentage(username);
+    return response;
+}
+
   Future<RecommendedSong> recommendSong() async {
     final response = await _userService.recommendSong();
     return response;
@@ -158,7 +165,7 @@ class UserController {
 
   void navigateToAnotherUserProfile(String username, List<String> baseFollowings) {
     Navigator.of(context).push(MaterialPageRoute(builder: (context) {
-      return AnotherUserProfile(username: username, baseFollowings: baseFollowings,);
+      return AnotherUserProfile(username: username, baseFollowings: baseFollowings);
     }));
   }
 

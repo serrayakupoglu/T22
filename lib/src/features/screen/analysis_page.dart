@@ -9,6 +9,7 @@ import 'package:untitled1/src/features/constants.dart';
 import 'package:untitled1/src/features/controller/user_controller.dart';
 import 'package:untitled1/src/features/models/user.dart';
 import '../common_widgets/analysis_box.dart';
+import '../models/genre_percentage.dart';
 import '../models/top_rated.dart';
 
 class AnalysisPage extends StatefulWidget{
@@ -25,7 +26,7 @@ class _AnalysisPageState extends State<AnalysisPage> {
   late UserController userController;
   late Future<TopRated> mostLikedGenre;
   late Future<int> mostLikedYear;
-
+  late Future<GenrePercentage> genrePercentages;
 
   @override
   void initState() {
@@ -33,6 +34,7 @@ class _AnalysisPageState extends State<AnalysisPage> {
     userController = UserController(context: context);
     mostLikedGenre = fetchMostLikedGenre();
     mostLikedYear = fetchMostLikedYear();
+    genrePercentages = fetchGenrePercentage();
   }
 
   Future<TopRated> fetchMostLikedGenre() async {
@@ -40,6 +42,10 @@ class _AnalysisPageState extends State<AnalysisPage> {
   }
   Future<int> fetchMostLikedYear() async {
     return userController.getMostLikedYear(widget.username);
+  }
+
+  Future<GenrePercentage> fetchGenrePercentage() async {
+    return userController.getGenrePercentage(widget.username);
   }
 
 
@@ -71,6 +77,31 @@ class _AnalysisPageState extends State<AnalysisPage> {
                 );
               } else {
                 return HeaderText(msg: "Data Is Loading...");
+              }
+            },
+          ),
+          FutureBuilder<GenrePercentage>(
+            future: genrePercentages, // Assuming getGenrePercentage returns GenrePercentage
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return HeaderText(msg: "Data Is Loading...");
+              } else if (snapshot.hasError) {
+                return HeaderText(msg: "Error: ${snapshot.error}");
+              } else {
+                GenrePercentage genrePercentage = snapshot.data!;
+
+                // Access the data within GenrePercentage
+                Map<String, double> data = genrePercentage.data;
+
+                // Modify the display logic as needed
+                String genreText = '';
+                data.forEach((genre, percentage) {
+                  genreText += '$genre: ${percentage.toStringAsFixed(2)}%, ';
+                });
+
+                return AnalysisBox(
+                  innerText: "Genre Percentage: $genreText",
+                );
               }
             },
           ),

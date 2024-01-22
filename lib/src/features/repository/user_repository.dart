@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../constants.dart';
+import '../models/genre_percentage.dart';
 import '../models/user.dart';
 import '../service/storage_service.dart';
 
@@ -154,6 +155,23 @@ class UserRepository {
     final url = Uri.parse('$kBaseUrl/get_average_release_year').replace(queryParameters: queryParams);
     final response = await http.get(url);
     return response;
+  }
+
+  Future<GenrePercentage> getGenrePercentage(String username) async {
+    final queryParams = {'username': username};
+    final url = Uri.parse('$kBaseUrl/get_genre_percentage').replace(queryParameters: queryParams);
+
+    final response = await http.get(url);
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> responseData = json.decode(response.body);
+      GenrePercentage genrePercentage = GenrePercentage.fromJson(responseData['genre_percentage']);
+      return genrePercentage;
+    } else {
+      print('Error: ${response.statusCode} - ${response.body}');
+      return Future.error(1);
+    }
+
+
   }
 
   Future<http.Response> recommendSong() async {

@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
+import 'package:untitled1/src/features/models/genre_percentage.dart';
 import 'package:untitled1/src/features/models/recommendations_cache.dart';
 import 'package:untitled1/src/features/models/user_cache.dart';
 import 'package:untitled1/src/features/service/storage_service.dart';
@@ -123,6 +124,11 @@ class UserService {
     Map<String, dynamic> data = json.decode(response.body);
     dynamic value = data['most liked average year'];
     return value;
+  }
+
+  Future<GenrePercentage> getGenrePercentage(String username) async {
+    final response = await _userRepository.getGenrePercentage(username);
+    return response;
   }
 
   Future<RecommendedSong> recommendSong() async {
