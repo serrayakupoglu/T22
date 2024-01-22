@@ -1767,62 +1767,58 @@ def like_playlist():
     
 
         
-
-
-
-        
-# Function to get the last added liked song from a user's liked songs
-def get_last_liked_song(username):
-    client = connect_to_mongo()
-    db = client.MusicDB
-    UserInfo_collection = db.UserInfo
-    
-    user_document = UserInfo_collection.find_one({'username': username})
-    if user_document:
-        liked_songs = user_document.get('likedSongs', [])
-        if liked_songs:
-            # Assuming the liked songs are ordered by the time they were added
-            return liked_songs[-1]
-    return None
-# Endpoint to get the last added liked song from a friend
-@app.route('/recommend_last_liked_song_from_friend', methods=['GET'])
-def recommend_last_liked_song_from_friend():
+# Endpoint to get the last added liked song from every friend
+@app.route('/recommend_last_liked_song_from_friends', methods=['GET'])
+def recommend_last_liked_song_from_friends():
     try:
         # Get the current user from the session
         current_user = session.get('username')
         if not current_user:
             return jsonify({'message': 'User not logged in'}), 401
 
-        client=connect_to_mongo()
-        db=client.MusicDB
-        UserInfo_collection=db.UserInfo
+        client = connect_to_mongo()
+        db = client.MusicDB
+        UserInfo_collection = db.UserInfo
         user_document = UserInfo_collection.find_one({'username': current_user})
         if user_document:
-            following_list= user_document.get('following', [])
-       
+            following_list = user_document.get('following', [])
 
         if not following_list:
             return jsonify({'message': 'User is not following anyone'}), 400
 
-        # Choose one user from the following list
-        friend_username = following_list[0]  
+        recommendations = []
 
-        # Get the last added liked song from the friend's liked songs
-        last_liked_song = get_last_liked_song(friend_username)
+        # Iterate through each friend in the following list
+        for friend_username in following_list:
+            # Get the last added liked song from the friend's liked songs
+            last_liked_song = get_last_liked_song(friend_username)
 
-        if last_liked_song:
-            track_name = last_liked_song['song']
-            artist_name =last_liked_song['artist']
-           
+            if last_liked_song:
+                track_name = last_liked_song['song']
+                artist_name = last_liked_song['artist']
 
-            return jsonify({'friend': friend_username, 'added': track_name, 'by': artist_name})
-        else:
-            return jsonify({'message': f'No liked songs found for {friend_username}'}), 404
+                recommendations.append({'friend': friend_username, 'added': track_name, 'by': artist_name})
+
+        return jsonify({'recommendations': recommendations})
 
     except Exception as e:
         return jsonify({'message': f'Error: {str(e)}'}), 500
 
+# Helper function to get the last liked song for a friend
+def get_last_liked_song(friend_username):
+    client = connect_to_mongo()
+    db = client.MusicDB
+    UserInfo_collection = db.UserInfo
+    friend_document = UserInfo_collection.find_one({'username': friend_username})
 
+    if friend_document:
+        liked_songs = friend_document.get('likedSongs', [])
+        if liked_songs:
+            # Sort the liked songs by the liked_at timestamp in descending order
+            sorted_liked_songs = sorted(liked_songs, key=lambda x: x['liked_at'], reverse=True)
+            return sorted_liked_songs[0]
+
+    return None
 
 # Song fetch api ends....
 ######################################
