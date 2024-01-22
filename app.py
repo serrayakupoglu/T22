@@ -1954,9 +1954,9 @@ def like_playlist():
     
 
         
-# Endpoint to get the last added liked song from every friend
-@app.route('/recommend_last_liked_song_from_friends', methods=['GET'])
-def recommend_last_liked_song_from_friends():
+# Endpoint to get the last added liked song from the first friend
+@app.route('/recommend_last_liked_song_from_first_friend', methods=['GET'])
+def recommend_last_liked_song_from_first_friend():
     try:
         # Get the current user from the session
         current_user = session.get('username')
@@ -1967,26 +1967,26 @@ def recommend_last_liked_song_from_friends():
         db = client.MusicDB
         UserInfo_collection = db.UserInfo
         user_document = UserInfo_collection.find_one({'username': current_user})
+        
         if user_document:
             following_list = user_document.get('following', [])
 
         if not following_list:
             return jsonify({'message': 'User is not following anyone'}), 400
 
-        recommendations = []
+        # Choose the first friend from the following list
+        first_friend_username = following_list[0]
 
-        # Iterate through each friend in the following list
-        for friend_username in following_list:
-            # Get the last added liked song from the friend's liked songs
-            last_liked_song = get_last_liked_song(friend_username)
+        # Get the last added liked song from the first friend's liked songs
+        last_liked_song = get_last_liked_song(first_friend_username)
 
-            if last_liked_song:
-                track_name = last_liked_song['song']
-                artist_name = last_liked_song['artist']
+        if last_liked_song:
+            track_name = last_liked_song['song']
+            artist_name = last_liked_song['artist']
 
-                recommendations.append({'friend': friend_username, 'added': track_name, 'by': artist_name})
-
-        return jsonify({'recommendations': recommendations})
+            return jsonify({'friend': first_friend_username, 'added': track_name, 'by': artist_name})
+        else:
+            return jsonify({'message': f'No liked songs found for {first_friend_username}'}), 404
 
     except Exception as e:
         return jsonify({'message': f'Error: {str(e)}'}), 500
