@@ -49,7 +49,10 @@ class _SignupPageState extends State<SignupPage> {
               padding: const EdgeInsets.only(bottom: kSignInPageSideMargin*1.2),
               child: InputBox(controller: surnameController,innerText: kSignUpSurnameText, isObscure: false),
             ),
-
+            Padding (
+              padding: const EdgeInsets.only(bottom: kSignInPageSideMargin*1.2),
+              child: InputBox(controller: emailController,innerText: kSignUpEmailText, isObscure: false),
+            ),
             Padding (
               padding: const EdgeInsets.only(bottom: kSignInPageSideMargin*1.2),
               child: InputBox(controller: userNameController,innerText: kSignUpUsernameText, isObscure: false),
@@ -72,7 +75,7 @@ class _SignupPageState extends State<SignupPage> {
             margin: const EdgeInsets.fromLTRB(kOpeningButtonSideMargin,kOpeningButtonSideMargin,kOpeningButtonSideMargin,kOpeningButtonSideMargin*2),
             child: ElevatedButton(
               onPressed: () async => {
-                controller.signUp(userNameController.text, passwordController.text, password2Controller.text, nameController.text, surnameController.text)
+                controller.signUp(userNameController.text, passwordController.text, password2Controller.text, nameController.text, surnameController.text, emailController.text)
               },
               style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.fromLTRB(kOpeningButtonSidePadding, kOpeningButtonVerticalPadding, kOpeningButtonSidePadding, kOpeningButtonVerticalPadding),

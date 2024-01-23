@@ -169,7 +169,7 @@ class UserRepository {
       return genrePercentage;
     } else {
       print('Error: ${response.statusCode} - ${response.body}');
-      return Future.error(1);
+      return Future.error('Data is not available');
     }
   }
 
@@ -187,7 +187,7 @@ class UserRepository {
       UserSongs userSongs = UserSongs.fromJson(json.decode(response.body));
       return userSongs;
     } else {
-      return Future.error(2);
+      return Future.error('Data is not available');
     }
   }
 

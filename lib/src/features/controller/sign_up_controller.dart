@@ -8,8 +8,8 @@ class SignUpController {
 
   SignUpController({required this.context});
 
-  void signUp(String username, String password, String password2, String name, String surname) async {
-    final result = await _service.signUp(name: name, password2: password2, password: password, surname: surname, username: username);
+  void signUp(String username, String password, String password2, String name, String surname, String email) async {
+    final result = await _service.signUp(name: name, password2: password2, password: password, surname: surname, username: username, email: email);
 
     if (result['success']) {
       _navigateToSignInPage();

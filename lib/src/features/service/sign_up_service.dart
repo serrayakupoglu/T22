@@ -12,9 +12,10 @@ class SignUpService {
     required String password2,
     required String name,
     required String surname,
+    required String email,
   }) async {
     try {
-      final response = await _repository.signUp(username,password,password2,name,surname);
+      final response = await _repository.signUp(username,password,password2,name,surname, email);
       if (response.statusCode == kSuccessCode) {
         return {'success': true, 'data': response.body};
       } else if (response.statusCode == kUserAlreadyExistsCode) {
