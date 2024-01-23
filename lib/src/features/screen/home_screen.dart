@@ -146,20 +146,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         }
                       },
                     ),
-                  ],
-                )
-              ),
-
-              Container(
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                margin: const EdgeInsets.all(10),
-                padding: const EdgeInsets.all(10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
                     sectionTitle("From Your Friend", Icons.group),
                     FutureBuilder<FriendSong?>(
                       future: friendSong,
@@ -175,7 +161,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 )
               ),
-
 
               Container(
                 decoration: BoxDecoration(
