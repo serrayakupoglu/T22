@@ -11,7 +11,7 @@ class User {
   final List<Map<String, dynamic>> likedSongs; // Correct type to Map<String, dynamic>
   final List<Playlist> playlists;
   final List<Map<String, dynamic>> ratedSongs;
-
+  final List<Map<String, dynamic>> likedPlaylists;
   User({
     required this.username,
     required this.name,
@@ -20,7 +20,8 @@ class User {
     required this.followings,
     required this.likedSongs,
     required this.playlists,
-    required this.ratedSongs
+    required this.ratedSongs,
+    required this.likedPlaylists,
   });
 
   List<Map<String, dynamic>> searchSongsByName(String songName) {
@@ -49,6 +50,20 @@ class User {
       }).toList();
     }
 
+    List<Map<String, dynamic>> likedPlaylists = [];
+
+    if (profileInfo.containsKey('likedPlaylists')) {
+      var likedPlaylistsList = profileInfo['likedPlaylists'] as List<dynamic>;
+      likedPlaylists = likedPlaylistsList.map((playlist) {
+        String friend = playlist['friend'].toString();
+        String playlistName = playlist['playlist_name'].toString();
+
+        return {
+          'friend': friend,
+          'playlist_name': playlistName,
+        };
+      }).toList();
+    }
 
     List<String> followers = List<String>.from(profileInfo['followers']);
     List<String> followings = profileInfo.containsKey('following')
@@ -107,7 +122,8 @@ class User {
       followings: followings,
       likedSongs: likedSongs,
       playlists: playlists,
-      ratedSongs: ratedSongs
+      ratedSongs: ratedSongs,
+      likedPlaylists: likedPlaylists,
     );
   }
 }

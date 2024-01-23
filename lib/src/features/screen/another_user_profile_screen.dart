@@ -101,7 +101,7 @@ class _AnotherUserProfileState extends State<AnotherUserProfile> {
               future: userData,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const CircularProgressIndicator(); // Show loading indicator
+                  return  Container(); // Show loading indicator
                 } else if (snapshot.hasData && snapshot.data != null) {
                   User user = snapshot.data!;
                   return Column(
@@ -131,7 +131,7 @@ class _AnotherUserProfileState extends State<AnotherUserProfile> {
                           future: baseUserData,
                           builder: (context, baseUserSnapshot) {
                             if(baseUserSnapshot.connectionState == ConnectionState.waiting) {
-                              return CircularProgressIndicator();
+                              return Container();
                             } else if (baseUserSnapshot.hasError) {
                               Text('Error While Fetching Data');
                             } else if (baseUserSnapshot.hasData && baseUserSnapshot.data != null) {
@@ -154,6 +154,9 @@ class _AnotherUserProfileState extends State<AnotherUserProfile> {
                       ),
                       profileOption('Lists', Icons.list, () {
                         controller.navigateToMyListsPage(context, user.username, false);
+                      }),
+                      profileOption('Liked Lists', Icons.list, () {
+                        controller.navigateToLikedLists(user.likedPlaylists);
                       }),
                       profileOption('Likings', Icons.favorite_border, () {
                         controller.navigateOthersToLikedSongsPage(context, user);

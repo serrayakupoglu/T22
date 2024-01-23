@@ -169,6 +169,13 @@ class UserService {
     return false;
   }
 
+  Future<bool> likePlaylist(String playlistName, String friendName) async {
+    final response = await _userRepository.likePlaylist(playlistName, friendName);
+    if(response.statusCode == 200) {
+      return true;
+    }
+    return false;
+  }
 
 
 

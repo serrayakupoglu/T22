@@ -35,7 +35,7 @@ class _UserProfileState extends State<UserProfile> {
   }
   Future<User> updateData() async {
     String? username = await storageService.readSecureData('username');
-    return await controller.getUserProfile('$username');
+    return await controller.updateUserProfile('$username');
   }
 
   @override
@@ -57,7 +57,7 @@ class _UserProfileState extends State<UserProfile> {
                   future: userData,
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return  Container();
+                      return Container();
                     } else if (snapshot.hasData && snapshot.data != null) {
                       User user = snapshot.data!;
                       return Column(
@@ -86,13 +86,16 @@ class _UserProfileState extends State<UserProfile> {
                           profileOption('My Lists', Icons.list, () {
                             controller.navigateToMyListsPage(context, user.username, true);
                           }),
+                          profileOption('Liked Lists', Icons.list, () {
+                            controller.navigateToLikedLists(user.likedPlaylists);
+                          }),
                           profileOption('Likings', Icons.favorite_border, () {
                             controller.navigateToLikedSongsPage(context, user);
                           }),
                           profileOption('Analysis', Icons.analytics, () {
                             controller.navigateToAnalysis(user.username);
                           }),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 10),
                           logoutButton(context, user.username),
                         ],
                       );

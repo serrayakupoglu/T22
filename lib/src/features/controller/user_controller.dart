@@ -3,6 +3,7 @@ import 'package:untitled1/src/features/models/friend_recommended_song.dart';
 import 'package:untitled1/src/features/models/genre_percentage.dart';
 import 'package:untitled1/src/features/screen/followers_screen.dart';
 import 'package:untitled1/src/features/screen/followings_screen.dart';
+import 'package:untitled1/src/features/screen/liked_lists_screen.dart';
 import 'package:untitled1/src/features/screen/opening_screen.dart';
 import 'package:untitled1/src/features/screen/playlists_screen.dart';
 import 'package:untitled1/src/features/screen/recommended_playlist_screen.dart';
@@ -21,6 +22,7 @@ import '../screen/another_user_list.dart';
 
 
 import '../screen/another_user_profile_screen.dart';
+import '../screen/liked_playlist_content_page.dart';
 import '../screen/liked_songs_screen.dart';
 import '../screen/playlist_content_screen.dart';
 import '../service/user_service.dart';
@@ -151,6 +153,10 @@ class UserController {
     return response;
   }
 
+  Future<bool> likePlaylist(String playlistName, String friendName) async {
+    final response = await _userService.likePlaylist(playlistName, friendName);
+    return response;
+  }
 
 
   void navigateToFollowers(List<String> followers, List<String> followings, String username, VoidCallback onAction) {
@@ -183,6 +189,11 @@ class UserController {
     }));
   }
 
+  void navigateToLikedLists(List<Map<String, dynamic>> likedLists) {
+    Navigator.of(context).push(MaterialPageRoute(builder: (context) {
+      return LikedListsScreen(likedPlaylists: likedLists);
+    }));
+  }
 
 
 
@@ -210,9 +221,15 @@ class UserController {
     }));
   }
 
-  void navigateToPlaylistContentPage(BuildContext context, List<Song> songList, String listName) {
+  void navigateToPlaylistContentPage(BuildContext context, List<Song> songList, String listName, bool isOwn, String username) {
     Navigator.of(context).push(MaterialPageRoute(builder: (context) {
-      return PlaylistContentPage(listOfSongs: songList, listName: listName);
+      return PlaylistContentPage(listOfSongs: songList, listName: listName, isOwn: isOwn, username: username);
+    }));
+  }
+
+  void navigateToLikedListContentPage(BuildContext context, String playlistName, String username) {
+    Navigator.of(context).push(MaterialPageRoute(builder: (context) {
+      return LikedListContentPage(playlistName: playlistName, username: username);
     }));
   }
 
