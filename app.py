@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, request, session
 from datetime import timedelta,datetime
 from flask import send_file
-
+from flask_mail import Mail, Message
 import certifi
 import requests
 import json 
@@ -14,6 +14,15 @@ from pymongo import MongoClient
 from bson import json_util
 
 app = Flask(__name__)
+
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587  # or the correct port for your mail server
+app.config['MAIL_USE_TLS'] = True  # Set to True if your server requires TLS
+app.config['MAIL_USERNAME'] = 'appppp1111123@gmail.com'
+app.config['MAIL_PASSWORD'] = 'lkdt zzie fvgy jegj'
+app.config['MAIL_DEFAULT_SENDER'] = 'appppp1111123@gmail.com'
+
+mail = Mail(app)
 app.secret_key = secrets.token_hex(16)
 
 app.config['SECRET_KEY'] = 'ygmr2002'
@@ -410,6 +419,7 @@ logged_in_users = {}
 def signup():
     if request.method == 'POST':
         username = request.form['username']
+        email = request.form['email']
         password = request.form['password']
         password2 = request.form['password2']
         name = request.form['name']
@@ -424,10 +434,10 @@ def signup():
         UserInfo_collection = db.UserInfo
 
         # Check if the username already exists
-        existing_user = UserInfo_collection.find_one({'username': username})
+        existing_user = UserInfo_collection.find_one({'$or': [{'username': username}, {'email': email}]})
+        #existing_user = UserInfo_collection.find_one({'username': username})
         if existing_user:
-            return jsonify({'message': 'Username already exists'}), 400
-
+            return jsonify({'message': 'Username or email already exists'}), 400
         # Generate a random userID (replace this with your user ID generation)
         user_id = generate_random_user_id()
 
@@ -436,6 +446,7 @@ def signup():
             'name': name,
             'surname': surname,
             'username': username,
+            'email': email,
             'userID': user_id,
             'userPassword': password,
             'followers': [],
@@ -458,6 +469,76 @@ def signup():
         print(f"Logged in users after signup: {logged_in_users}")  # Debugging line
 
         return jsonify({'message': 'Signup successful'})
+
+    return jsonify({'message': 'Method not allowed'}), 405
+
+@app.route('/forgot_password', methods=['POST'])
+def forgot_password_route():
+    if request.method == 'POST':
+        email = request.form['email']
+        result, message = reset_password(email, mail)
+        return jsonify({'message': message}), 200 if result else 404
+    return jsonify({'message': 'Method not allowed'}), 405
+
+def reset_password(email, mail):
+    client = connect_to_mongo()
+    db = client.MusicDB
+    UserInfo_collection = db.UserInfo
+
+    user = UserInfo_collection.find_one({'email': email})
+
+    if user:
+        new_password = generate_random_password()
+        UserInfo_collection.update_one({'_id': user['_id']}, {'$set': {'userPassword': new_password}})
+        if send_password_reset_email(email, new_password, mail):
+            return True, 'Password reset successful. Check your email for the new password.'
+        else:
+            return False, 'Failed to send password reset email.'
+    else:
+        return False, 'User not found with the provided email address.'
+
+
+def generate_random_password():
+    # Rastgele 10 karakterlik bir şifre oluştur
+    return ''.join(random.choices(string.ascii_letters + string.digits, k=10))
+
+def send_password_reset_email(email, new_password, mail):
+    try:
+        msg = Message('Password Reset', recipients=[email])
+        msg.body = f"Your password has been reset. Your new password is: {new_password}"
+        mail.send(msg)
+        return True
+    except Exception as e:
+        print(f"Error sending email: {str(e)}")
+        return False
+
+@app.route('/change_password', methods=['POST'])
+def change_password():
+    if request.method == 'POST':
+        # Check if the user is logged in
+        current_user = get_current_user()
+
+        if current_user:
+            current_password = request.form['current_password']
+            new_password = request.form['new_password']
+            if not new_password:
+                return jsonify({'message': 'New password cannot be empty'}), 400
+            
+            # Check if the provided current password matches the user's actual password
+            if current_user['userPassword'] == current_password:
+                # Replace this with your MongoDB connection
+                client = connect_to_mongo()
+                db = client.MusicDB
+                UserInfo_collection = db.UserInfo
+
+                # Update the user's password in the database
+                UserInfo_collection.update_one({'_id': current_user['_id']}, {'$set': {'userPassword': new_password}})
+
+                return jsonify({'message': 'Password changed successfully'})
+
+            return jsonify({'message': 'Invalid current password'}), 401
+
+        return jsonify({'message': 'User not logged in'}), 401
 
     return jsonify({'message': 'Method not allowed'}), 405
 
