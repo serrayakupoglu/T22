@@ -36,44 +36,46 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
   }
 
-  void fetchData () async {
+  void fetchData() async {
     username = StorageService().readSecureData('username');
-    if(!RecommendationsCache.containsRecommendation('recommendedSong')) {
+    if (!RecommendationsCache.containsRecommendation('recommendedSong')) {
       song = userController.recommendSong();
       RecommendationsCache.setRecommendation('recommendedSong', song);
     } else {
       song = RecommendationsCache.getRecommendation('recommendedSong');
     }
 
-    if(!RecommendationsCache.containsRecommendation('friendSong')) {
+    if (!RecommendationsCache.containsRecommendation('friendSong')) {
       friendSong = userController.recommendSongFromFriends();
       RecommendationsCache.setRecommendation('friendSong', friendSong);
     } else {
-      friendSong =  RecommendationsCache.getRecommendation('friendSong');
+      friendSong = RecommendationsCache.getRecommendation('friendSong');
     }
 
-    if(!RecommendationsCache.containsRecommendation('relaxingPlaylist')) {
+    if (!RecommendationsCache.containsRecommendation('relaxingPlaylist')) {
       relaxingPlaylist = songController.recommendRelaxingPlaylist();
-      RecommendationsCache.setRecommendation('relaxingPlaylist', relaxingPlaylist);
+      RecommendationsCache.setRecommendation(
+          'relaxingPlaylist', relaxingPlaylist);
     } else {
-      relaxingPlaylist = RecommendationsCache.getRecommendation('relaxingPlaylist');
+      relaxingPlaylist =
+          RecommendationsCache.getRecommendation('relaxingPlaylist');
     }
 
-    if(!RecommendationsCache.containsRecommendation('energeticPlaylist')) {
+    if (!RecommendationsCache.containsRecommendation('energeticPlaylist')) {
       energeticPlaylist = songController.recommendEnergeticPlaylist();
-      RecommendationsCache.setRecommendation('energeticPlaylist', energeticPlaylist);
+      RecommendationsCache.setRecommendation(
+          'energeticPlaylist', energeticPlaylist);
     } else {
-      energeticPlaylist = RecommendationsCache.getRecommendation('energeticPlaylist');
+      energeticPlaylist =
+          RecommendationsCache.getRecommendation('energeticPlaylist');
     }
 
-    if(!RecommendationsCache.containsRecommendation('playlist')) {
+    if (!RecommendationsCache.containsRecommendation('playlist')) {
       playlist = songController.recommendPlaylist();
       RecommendationsCache.setRecommendation('playlist', playlist);
     } else {
       playlist = RecommendationsCache.getRecommendation('playlist');
     }
-
-
   }
 
   @override
@@ -90,63 +92,127 @@ class _HomeScreenState extends State<HomeScreen> {
       },
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
-        child:SafeArea(
+        child: SafeArea(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              FutureBuilder<String?>(
-                future: username,
-                builder: (context, snapshot) {
-                  if (snapshot.hasData && snapshot.data != null) {
-                    return Padding(
-                      padding: const EdgeInsets.all(15),
-                      child: Text(
-                        'Hello ${snapshot.data},\nwhat do you want to listen to today?',
-                        style: TextStyle(
-                          fontSize: 26,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.green[700],
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                margin: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(10),
+                child: FutureBuilder<String?>(
+                  future: username,
+                  builder: (context, snapshot) {
+                    if (snapshot.hasData && snapshot.data != null) {
+                      return Padding(
+                        padding: const EdgeInsets.all(15),
+                        child: Text(
+                          'Hello, if you would like some music, here are some recommendations!',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
                         ),
-                      ),
-                    );
-                  } else {
-                    return Container(); // Or some other placeholder
-                  }
-                },
+                      );
+                    } else {
+                      return Container(); // Or some other placeholder
+                    }
+                  },
+                ),
               ),
-              sectionTitle("From Your Recent Likes", Icons.favorite),
-              FutureBuilder<RecommendedSong?>(
-                future: song,
-                builder: (BuildContext context, AsyncSnapshot<RecommendedSong?> snapshot) {
-                  if (snapshot.hasData && snapshot.data != null) {
-                    final recommendedSong = snapshot.data!;
-                    return buildRecommendedSongSection(recommendedSong);
-                  } else {
-                    return Container(); // Or some other placeholder
-                  }
-                },
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                margin: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    sectionTitle("From Your Recent Likes", Icons.favorite),
+                    FutureBuilder<RecommendedSong?>(
+                      future: song,
+                      builder: (BuildContext context, AsyncSnapshot<RecommendedSong?> snapshot) {
+                        if (snapshot.hasData && snapshot.data != null) {
+                          final recommendedSong = snapshot.data!;
+                          return buildRecommendedSongSection(recommendedSong);
+                        } else {
+                          return Container(); // Or some other placeholder
+                        }
+                      },
+                    ),
+                  ],
+                )
               ),
-              sectionTitle("From Your Friend", Icons.group),
-              FutureBuilder<FriendSong?>(
-                future: friendSong,
-                builder: (BuildContext context, AsyncSnapshot<FriendSong?> snapshot) {
-                  if (snapshot.hasData && snapshot.data != null) {
-                    final friendSong = snapshot.data!;
-                    return buildFriendSongSection(friendSong);
-                  } else {
-                    return Container(); // Or some other placeholder
-                  }
-                },
+
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                margin: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    sectionTitle("From Your Friend", Icons.group),
+                    FutureBuilder<FriendSong?>(
+                      future: friendSong,
+                      builder: (BuildContext context, AsyncSnapshot<FriendSong?> snapshot) {
+                        if (snapshot.hasData && snapshot.data != null) {
+                          final friendSong = snapshot.data!;
+                          return buildFriendSongSection(friendSong);
+                        } else {
+                          return Container(); // Or some other placeholder
+                        }
+                      },
+                    ),
+                  ],
+                )
               ),
-              sectionTitle("For Your Mood", Icons.sentiment_very_satisfied),
-              moodPlaylistSection("Energetic", Icons.flash_on, () {userController.navigateToRecommendedPlaylistPage(context, 'energeticPlaylist');}),
-              moodPlaylistSection("Relaxing", Icons.spa, () {userController.navigateToRecommendedPlaylistPage(context, 'relaxingPlaylist');}),
-              sectionTitle("From Your Liked Songs", Icons.music_note),
-              buildLikedSongsSection(context),
+
+
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                margin: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(10),
+                child: Column(
+                  children: [
+                    sectionTitle("For Your Mood", Icons.sentiment_very_satisfied),
+                    moodPlaylistSection("Energetic", Icons.flash_on,
+                            () => userController.navigateToRecommendedPlaylistPage(context, 'energeticPlaylist')),
+                    moodPlaylistSection("Relaxing", Icons.spa,
+                            () => userController.navigateToRecommendedPlaylistPage(context, 'relaxingPlaylist')),
+                  ],
+                ),
+              ),
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                margin: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(10),
+                child: Column(
+                  children: [
+                    sectionTitle("From Your Liked Songs", Icons.music_note),
+                    buildLikedSongsSection(context),
+                  ],
+                )
+
+              ),
+
             ],
           ),
         ),
-
       ),
     );
   }
@@ -233,7 +299,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-
   Widget buildLikedSongsSection(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(left: 10.0, bottom: 20.0),
@@ -242,8 +307,6 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           GestureDetector(
             onTap: () {
-              // Replace 'Your Playlist Name' with the actual playlist name you want to pass
-
               userController.navigateToRecommendedPlaylistPage(context, 'playlist');
             },
             child: const Text(
@@ -251,7 +314,7 @@ class _HomeScreenState extends State<HomeScreen> {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
-                color: Colors.blue, // Change the color to your preference
+                color: Colors.white, // Change the color to your preference
                 decoration: TextDecoration.underline, // Optional underline
               ),
             ),
@@ -263,5 +326,3 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
 }
-
-
