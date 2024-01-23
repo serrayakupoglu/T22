@@ -10,6 +10,7 @@ class User {
   final List<String> followings;
   final List<Map<String, dynamic>> likedSongs; // Correct type to Map<String, dynamic>
   final List<Playlist> playlists;
+  final List<Map<String, dynamic>> ratedSongs;
 
   User({
     required this.username,
@@ -19,16 +20,35 @@ class User {
     required this.followings,
     required this.likedSongs,
     required this.playlists,
+    required this.ratedSongs
   });
 
+  List<Map<String, dynamic>> searchSongsByName(String songName) {
+    return ratedSongs.where((ratedSong) {
+      return ratedSong['song_name'].toLowerCase() == songName.toLowerCase();
+    }).toList();
+  }
 
   factory User.fromJson(Map<String, dynamic> json) {
 
-    String replaceNoneWithNull(String jsonString) {
-      return jsonString.replaceAll('None', 'null');
-    }
+
 
     var profileInfo = json['profile_info'];
+    List<Map<String, dynamic>> ratedSongs = [];
+    if (profileInfo.containsKey('rated_songs')) {
+      var ratedSongsList = profileInfo['rated_songs'] as List<dynamic>;
+      ratedSongs = ratedSongsList.map((ratedSong) {
+        // Extract the song name and rating
+        String songName = ratedSong.keys.first;
+        int rating = ratedSong[songName];
+
+        return {
+          'song_name': songName,
+          'rating': rating,
+        };
+      }).toList();
+    }
+
 
     List<String> followers = List<String>.from(profileInfo['followers']);
     List<String> followings = profileInfo.containsKey('following')
@@ -59,13 +79,6 @@ class User {
       }).toList();
     }
 
-
-
-
-
-
-
-
     List<Playlist> playlists = [];
 
     if (profileInfo.containsKey('playlists')) {
@@ -94,6 +107,7 @@ class User {
       followings: followings,
       likedSongs: likedSongs,
       playlists: playlists,
+      ratedSongs: ratedSongs
     );
   }
 }

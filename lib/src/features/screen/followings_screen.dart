@@ -7,8 +7,9 @@ class FollowingsPage extends StatefulWidget {
   final String currentUserName;
   final List<String> followings;
   final List<String> baseFollowings; // New property for followings
+  final VoidCallback onUpdate;
 
-  const FollowingsPage({Key? key, required this.followings, required this.baseFollowings, required this.currentUserName})
+  const FollowingsPage({Key? key, required this.followings, required this.baseFollowings, required this.currentUserName, required this.onUpdate})
       : super(key: key);
 
   @override
@@ -45,6 +46,7 @@ class _FollowingsPageState extends State<FollowingsPage> {
           setState(() {
             _currentFollowings.remove(username);
           });
+          widget.onUpdate();
         } else {
           print('Unfollow database call failed');
         }
@@ -57,6 +59,7 @@ class _FollowingsPageState extends State<FollowingsPage> {
           setState(() {
             _currentFollowings.add(username);
           });
+          widget.onUpdate();
         } else {
           print('Follow database call failed');
         }
@@ -77,7 +80,7 @@ class _FollowingsPageState extends State<FollowingsPage> {
           return ListTile(
             title: GestureDetector(
               onTap: (){
-                _userController.navigateToAnotherUserProfile(following, _currentFollowings);
+                _userController.navigateToAnotherUserProfile(following, widget.onUpdate);
               },
               child: Text(
                 "@$following",

@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:untitled1/src/features/common_widgets/body_text.dart';
-import 'package:untitled1/src/features/common_widgets/common_app_bar.dart';
 import 'package:untitled1/src/features/controller/user_controller.dart';
 import 'package:untitled1/src/features/models/user.dart';
 import 'package:untitled1/src/features/service/storage_service.dart';
@@ -22,22 +20,22 @@ class _UserProfileState extends State<UserProfile> {
     controller = UserController(context: context);
     userData = fetchData();
   }
+  @override
+  void dispose() {
+    super.dispose();
+  }
 
   Future<User?> fetchData() async {
     String? username = await storageService.readSecureData('username');
     if (username != null) {
-      return controller.getUserProfile(username);
+      return await controller.getUserProfile(username);
     } else {
       return null;
     }
   }
-  Future<User?> updateData() async {
+  Future<User> updateData() async {
     String? username = await storageService.readSecureData('username');
-    if (username != null) {
-      return controller.updateUserProfile(username);
-    } else {
-      return null;
-    }
+    return await controller.getUserProfile('$username');
   }
 
   @override
@@ -53,7 +51,7 @@ class _UserProfileState extends State<UserProfile> {
           child: SafeArea(
             child: Column(
               children: [
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
 
                 FutureBuilder<User?>(
                   future: userData,
@@ -64,12 +62,12 @@ class _UserProfileState extends State<UserProfile> {
                       User user = snapshot.data!;
                       return Column(
                         children: [
-                          SizedBox(height: 40),
+                          const SizedBox(height: 40),
                           const Icon(Icons.supervised_user_circle, color: Colors.white, size: 82),
-                          SizedBox(height: 10),
+                          const SizedBox(height: 10),
                           Text(
                             '@${user.username}',
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
                               color: Colors.green, // Text color green
@@ -77,14 +75,14 @@ class _UserProfileState extends State<UserProfile> {
                           ),
                           Text(
                             '${user.name} ${user.surname}',
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 18,
                               color: Colors.green, // Text color green
                             ),
                           ),
-                          SizedBox(height: 20),
+                          const SizedBox(height: 20),
                           followerFollowingSection(user),
-                          SizedBox(height: 20),
+                          const SizedBox(height: 20),
                           profileOption('My Lists', Icons.list, () {
                             controller.navigateToMyListsPage(context, user.username, true);
                           }),
@@ -94,12 +92,12 @@ class _UserProfileState extends State<UserProfile> {
                           profileOption('Analysis', Icons.analytics, () {
                             controller.navigateToAnalysis(user.username);
                           }),
-                          SizedBox(height: 20),
+                          const SizedBox(height: 20),
                           logoutButton(context, user.username),
                         ],
                       );
                     } else {
-                      return Text(
+                      return const Text(
                         'No user data available.',
                         style: TextStyle(color: Colors.green), // Text color green
                       );
@@ -119,7 +117,15 @@ class _UserProfileState extends State<UserProfile> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         GestureDetector(
-          onTap: () => controller.navigateToFollowers(user.followers, user.followings, user.username),
+          onTap: () => controller.navigateToFollowers(
+              user.followers, user.followings, user.username,
+                  () {
+                userData = updateData();
+                setState(() {
+
+                });
+              }
+          ),
           child: Text(
             'Followers: ${user.followers.length}',
             style: TextStyle(
@@ -136,7 +142,15 @@ class _UserProfileState extends State<UserProfile> {
           ),
         ),
         GestureDetector(
-          onTap: () => controller.navigateToFollowings(user.followings, user.followings, user.username),
+          onTap: () => controller.navigateToFollowings(
+              user.followings, user.followings, user.username,
+                  () {
+                    userData = updateData();
+                    setState(() {
+
+                });
+              }
+          ),
           child: Text(
             'Following: ${user.followings.length}',
             style: TextStyle(

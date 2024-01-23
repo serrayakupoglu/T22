@@ -15,6 +15,8 @@ import '../models/user.dart';
 import '../models/user_cache.dart';
 import '../models/user_mood_model.dart';
 import '../screen/analysis_page.dart';
+import '../screen/another_user_followers.dart';
+import '../screen/another_user_followings.dart';
 import '../screen/another_user_list.dart';
 
 
@@ -62,6 +64,7 @@ class UserController {
 
   Future<bool> followUser(String targetUsername) async {
     final success = await _userService.followUser(targetUsername);
+
     return success;
   }
 
@@ -150,9 +153,27 @@ class UserController {
 
 
 
-  void navigateToFollowers(List<String> followers, List<String> followings, String username) {
+  void navigateToFollowers(List<String> followers, List<String> followings, String username, VoidCallback onAction) {
     Navigator.of(context).push(MaterialPageRoute(builder: (context) {
-      return FollowersPage(followers: followers, followings: followings, currentUserName: username);
+      return FollowersPage(followers: followers, followings: followings, currentUserName: username, onUpdate: onAction,);
+    }));
+  }
+
+  void navigateToFollowings(List<String> followings, List<String> baseFollowings, String username, VoidCallback onAction) {
+    Navigator.of(context).push(MaterialPageRoute(builder: (context) {
+      return FollowingsPage(baseFollowings: baseFollowings, followings: followings, currentUserName: username, onUpdate: onAction);
+    }));
+  }
+
+  void navigateToAnotherUserFollowers(String username, VoidCallback onAction) {
+    Navigator.of(context).push(MaterialPageRoute(builder: (context) {
+      return AnotherUserFollowersPage(currentUserName: username, onUpdate: (){},);
+    }));
+  }
+
+  void navigateToAnotherUserFollowings(String username, VoidCallback onAction) {
+    Navigator.of(context).push(MaterialPageRoute(builder: (context) {
+      return AnotherUserFollowingsPage(currentUserName: username, onUpdate: (){},);
     }));
   }
 
@@ -163,15 +184,11 @@ class UserController {
   }
 
 
-  void navigateToFollowings(List<String> followings, List<String> baseFollowings, String username) {
-    Navigator.of(context).push(MaterialPageRoute(builder: (context) {
-      return FollowingsPage(baseFollowings: baseFollowings, followings: followings, currentUserName: username);
-    }));
-  }
 
-  void navigateToAnotherUserProfile(String username, List<String> baseFollowings) {
+
+  void navigateToAnotherUserProfile(String username, VoidCallback onAction) {
     Navigator.of(context).push(MaterialPageRoute(builder: (context) {
-      return AnotherUserProfile(username: username, baseFollowings: baseFollowings);
+      return AnotherUserProfile(username: username, onUpdate: onAction,);
     }));
   }
 
