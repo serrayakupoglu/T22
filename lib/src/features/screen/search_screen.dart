@@ -3,6 +3,7 @@ import 'package:untitled1/src/features/common_widgets/bottom_song_sheet.dart';
 import 'package:untitled1/src/features/common_widgets/common_app_bar.dart';
 import 'package:untitled1/src/features/common_widgets/header_text.dart';
 import 'package:untitled1/src/features/common_widgets/song_box.dart';
+import 'package:untitled1/src/features/common_widgets/user_box.dart';
 import 'package:untitled1/src/features/controller/song_controller.dart';
 import 'package:untitled1/src/features/controller/user_controller.dart';
 import 'package:untitled1/src/features/models/user_cache.dart';
@@ -284,9 +285,9 @@ class _SearchScreenState extends State<SearchScreen> {
                   onTap: () async {
                     username = await storageService.readSecureData('username');
                     User user = await userController.getUserProfile('$username');
-                    userController.navigateToAnotherUserProfile(userList[index].username, user.followings);
+                    userController.navigateToAnotherUserProfile(userList[index].username, (){});
                     },
-                  child: SongBox(
+                  child: UserBox(
                     artistName: "@${userList[index].username}",
                     songName: "${userList[index].name} ${userList[index].surname}",
                     onIconPressed: () {

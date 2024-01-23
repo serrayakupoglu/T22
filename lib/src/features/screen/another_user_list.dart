@@ -24,7 +24,36 @@ class _OthersLikedSongsPageState extends State<OthersLikedSongsPage> {
         itemCount: widget.user.likedSongs.length,
         itemBuilder: (context, index) {
           Map<dynamic, dynamic> song = widget.user.likedSongs[index];
-          return SongBox(songName: song['song'], artistName: song['artist']);
+          return SongBox(
+              songName: song['song'],
+              artistName: song['artist'],
+              onIconPressed: (){
+              List<Map<String, dynamic>> responses = widget.user.searchSongsByName(song['song']);
+              String existingContent = 'Liked at: ${song['liked_at'].day.toString().padLeft(2, '0')}/${song['liked_at'].month.toString().padLeft(2, '0')}/${song['liked_at'].year}';
+              List<Widget> responseWidgets = [];
+
+              responseWidgets.add(Text(existingContent));
+              if (responses.isNotEmpty) {
+
+                responseWidgets.add(SizedBox(height: 8));
+
+                for (var response in responses) {
+                  String responseText = 'Previous Rate: ${response['rating']}';
+                  responseWidgets.add(Text(responseText));
+                }
+              }
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  backgroundColor: Colors.green,
+                  content: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: responseWidgets,
+                  ),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            },
+          );
         },
       ),
     );

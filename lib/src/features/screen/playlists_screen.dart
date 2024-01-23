@@ -108,7 +108,7 @@ class _SongListScreenState extends State<SongListScreen>{
                       ),
                     ),
                     onTap: () {
-                      controller.navigateToPlaylistContentPage(context, user.playlists[index].tracks, user.playlists[index].name);
+                      controller.navigateToPlaylistContentPage(context, user.playlists[index].tracks, user.playlists[index].name, widget.hasFloatingButton, widget.username);
                     },
                   ),
                 );

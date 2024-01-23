@@ -254,5 +254,23 @@ class UserRepository {
     return response;
   }
 
+  Future<http.Response> likePlaylist(String playlistName, String friendName) async {
+    final url = Uri.parse('$kBaseUrl/like_playlist');
+    final session = await storageService.readSecureData('session');
+    final response = await http.post(
+      url,
+      headers: {
+        'Authorization': 'Bearer $session',
+        'cookie': 'session=$session',
+      },
+      body: {
+        'friend_username': friendName,
+        'playlist_name': playlistName,
+      },
+    );
+    return response;
+
+  }
+
 
 }

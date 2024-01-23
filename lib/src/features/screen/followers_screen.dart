@@ -5,9 +5,9 @@ import '../constants.dart';
 class FollowersPage extends StatefulWidget {
   final String currentUserName;
   final List<String> followers;
-  final List<String> followings; // New property for followings
-
-  const FollowersPage({Key? key, required this.followers, required this.followings, required this.currentUserName})
+  final List<String> followings;
+  final VoidCallback onUpdate;
+  const FollowersPage({Key? key, required this.followers, required this.followings, required this.currentUserName, required this.onUpdate})
       : super(key: key);
 
   @override
@@ -42,6 +42,7 @@ class _FollowersPageState extends State<FollowersPage> {
           setState(() {
             _currentFollowings.remove(username);
           });
+          widget.onUpdate();
         } else {
           print('Unfollow database call failed');
         }
@@ -52,6 +53,7 @@ class _FollowersPageState extends State<FollowersPage> {
           setState(() {
             _currentFollowings.add(username);
           });
+          widget.onUpdate();
         } else {
           print('Follow database call failed');
         }
@@ -72,7 +74,7 @@ class _FollowersPageState extends State<FollowersPage> {
           return ListTile(
             title: GestureDetector(
               onTap: (){
-                _userController.navigateToAnotherUserProfile(follower, _currentFollowings);
+                _userController.navigateToAnotherUserProfile(follower, widget.onUpdate);
               },
               child: Text(
                 "@$follower",

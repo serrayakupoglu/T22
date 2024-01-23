@@ -1,6 +1,10 @@
+import 'dart:ffi';
+
 import 'package:flutter/material.dart';
 import 'package:untitled1/src/features/controller/song_controller.dart';
+import 'package:untitled1/src/features/controller/user_controller.dart';
 import 'package:untitled1/src/features/models/song.dart';
+import 'package:untitled1/src/features/service/storage_service.dart';
 
 class RatingDialog extends StatefulWidget {
   final Song song;
@@ -14,10 +18,12 @@ class RatingDialog extends StatefulWidget {
 class _RatingDialogState extends State<RatingDialog> {
   double _userRating = 0;
   late SongController controller;
+  late UserController userController;
   @override
   void initState() {
     super.initState();
     controller = SongController(context);
+    userController = UserController(context: context);
   }
 
   @override
@@ -55,6 +61,8 @@ class _RatingDialogState extends State<RatingDialog> {
               style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
               onPressed: () async {
                 await controller.rateSong(widget.song.songName, _userRating.toInt());
+                String? username = await storageService.readSecureData('username');
+                await userController.updateUserProfile('$username');
                 Navigator.pop(context);
               },
               child: const Text('Submit'),

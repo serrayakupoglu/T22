@@ -21,7 +21,6 @@ class _HomePageState extends State<HomePage> {
     SearchScreen(),
     SongInputPage(),
     UserProfile(),
-
   ];
 
   final List<String> _appBarTitles = [kHomeAppBarText, kSearchSongAppBarText, "Input A Song", kProfileAppBarText];
