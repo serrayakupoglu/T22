@@ -22,6 +22,7 @@ import '../screen/another_user_list.dart';
 
 
 import '../screen/another_user_profile_screen.dart';
+import '../screen/last_day_songs_screen.dart';
 import '../screen/liked_playlist_content_page.dart';
 import '../screen/liked_songs_screen.dart';
 import '../screen/playlist_content_screen.dart';
@@ -158,6 +159,11 @@ class UserController {
     return response;
   }
 
+  void navigateToRecentSongs() {
+    Navigator.of(context).push(MaterialPageRoute(builder: (context) {
+      return LastDaySongsScreen();
+    }));
+  }
 
   void navigateToFollowers(List<String> followers, List<String> followings, String username, VoidCallback onAction) {
     Navigator.of(context).push(MaterialPageRoute(builder: (context) {

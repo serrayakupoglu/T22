@@ -7,6 +7,7 @@ import 'package:untitled1/src/features/models/recommended_song.dart';
 import 'package:untitled1/src/features/repository/user_repository.dart';
 import 'package:untitled1/src/features/service/storage_service.dart';
 import '../models/friend_recommended_song.dart';
+import '../models/last_day_songs.dart';
 import '../models/playlist_recommendation_instance.dart';
 
 
@@ -26,7 +27,7 @@ class _HomeScreenState extends State<HomeScreen> {
   late Future<List<PlaylistRecommendation>> relaxingPlaylist;
   late Future<List<PlaylistRecommendation>> energeticPlaylist;
   late Future<List<PlaylistRecommendation>> playlist;
-
+  late Future<LastDaySongsList> lastDaySongsList;
 
   @override
   void initState() {
@@ -75,6 +76,13 @@ class _HomeScreenState extends State<HomeScreen> {
       RecommendationsCache.setRecommendation('playlist', playlist);
     } else {
       playlist = RecommendationsCache.getRecommendation('playlist');
+    }
+
+    if (!RecommendationsCache.containsRecommendation('lastDayList')) {
+      lastDaySongsList = songController.getLastDaySongs();
+      RecommendationsCache.setRecommendation('lastDayList', lastDaySongsList);
+    } else {
+      lastDaySongsList = RecommendationsCache.getRecommendation('lastDayList');
     }
   }
 
@@ -192,6 +200,22 @@ class _HomeScreenState extends State<HomeScreen> {
                     buildLikedSongsSection(context),
                   ],
                 )
+
+              ),
+              Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  margin: const EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(10),
+                  child: Column(
+                    children: [
+                      sectionTitle("Recently Added Songs", Icons.music_note),
+                      moodPlaylistSection('Recent Songs', Icons.update,
+                              () => userController.navigateToRecentSongs()),
+                    ],
+                  )
 
               ),
 

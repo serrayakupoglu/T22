@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:untitled1/src/features/models/song.dart';
 import 'package:untitled1/src/features/repository/song_repository.dart';
 import '../constants.dart';
+import '../models/last_day_songs.dart';
 import '../models/playlist_recommendation_instance.dart';
 import '../models/song_input.dart';
 
@@ -46,4 +47,9 @@ class SongService {
   Future<List<PlaylistRecommendation>> recommendPlaylist() async {
     return await _repository.recommendPlaylist();
   }
+
+  Future<LastDaySongsList> getLastDaySongs() async {
+    return await _repository.getLastDaySongs();
+  }
+
 }

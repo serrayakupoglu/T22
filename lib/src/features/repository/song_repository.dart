@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:untitled1/src/features/constants.dart';
 import 'package:untitled1/src/features/service/storage_service.dart';
 
+import '../models/last_day_songs.dart';
 import '../models/playlist_recommendation_instance.dart';
 import '../models/song_input.dart';
 
@@ -160,7 +161,15 @@ class SongRepository {
     }
   }
 
-  
+  Future<LastDaySongsList> getLastDaySongs() async {
+    final url = Uri.parse('$kBaseUrl/get_last_day_songs');
+    final response = await http.get(url);
+    Map<String, dynamic> jsonData = jsonDecode(response.body);
+    LastDaySongsList lastDaySongsList = LastDaySongsList.fromJson(jsonData['last_day_songs']);
+    return lastDaySongsList;
+    }
+
+
 
 }
 

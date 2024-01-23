@@ -1,80 +1,71 @@
 import 'package:flutter/material.dart';
 import 'package:untitled1/src/features/common_widgets/common_app_bar.dart';
 import 'package:untitled1/src/features/controller/user_controller.dart';
-import 'package:untitled1/src/features/models/recommendations_cache.dart';
 import 'package:untitled1/src/features/service/storage_service.dart';
 
 import '../common_widgets/song_box_without_icon.dart';
 import '../common_widgets/rating_dialog.dart';
 import '../common_widgets/slidable_song_box_recommended_playlist.dart';
 import '../constants.dart';
-import '../models/playlist_recommendation_instance.dart';
+import '../models/last_day_songs.dart';
+import '../models/recommendations_cache.dart';
 import '../models/song.dart';
 import '../models/user.dart';
 
-class RecommendedPlaylistScreen extends StatefulWidget {
-  final String playlistName;
-  const RecommendedPlaylistScreen({super.key, required this.playlistName});
-  
-  @override
-  State<StatefulWidget> createState() => _RecommendedPlaylistScreenState();
+class LastDaySongsScreen extends StatefulWidget {
+  const LastDaySongsScreen({Key? key}) : super(key: key);
 
+  @override
+  State<StatefulWidget> createState()  => _LastDaySongsScreenState();
 }
 
-class _RecommendedPlaylistScreenState extends State<RecommendedPlaylistScreen>{
-  late Future<List<PlaylistRecommendation>> playlist;
+class _LastDaySongsScreenState extends State<LastDaySongsScreen> {
+  late Future<LastDaySongsList> lastDaySongsList;
   late User userData;
   late UserController userController;
-  late String playlistNameAppBar;
+
   @override
   void initState() {
-    fetchPlaylist();
+    fetchLastDaySongsList();
     fetchUserData();
     userController = UserController(context: context);
-    if(widget.playlistName == 'energeticPlaylist') playlistNameAppBar = 'Energetic Playlist';
-    if(widget.playlistName == 'relaxingPlaylist') playlistNameAppBar = 'Relaxing Playlist';
-    if(widget.playlistName == 'playlist') playlistNameAppBar = 'Personalized Playlist';
-
     super.initState();
+  }
 
+  void fetchLastDaySongsList() async {
+    lastDaySongsList = RecommendationsCache.getRecommendation('lastDayList');
   }
-  
-  void fetchPlaylist () async {
-    playlist = RecommendationsCache.getRecommendation(widget.playlistName);
-  }
-  fetchUserData () async {
+
+  fetchUserData() async {
     String? username = await StorageService().readSecureData('username');
     userData = await userController.getUserProfile('$username');
-    setState(() {
-
-    });
+    setState(() {});
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CommonAppBar(appBarText: playlistNameAppBar, canGoBack: true),
+      appBar: CommonAppBar(appBarText: 'Last Day Songs', canGoBack: true),
       backgroundColor: const Color(kOpeningBG),
-      body: FutureBuilder<List<PlaylistRecommendation>>(
-        future: playlist, // Your Future<List<PlaylistRecommendation>> here
-        builder: (BuildContext context, AsyncSnapshot<List<PlaylistRecommendation>> snapshot) {
+      body: FutureBuilder<LastDaySongsList>(
+        future: lastDaySongsList,
+        builder: (BuildContext context, AsyncSnapshot<LastDaySongsList> snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            // Loading state
             return Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
-            // Error state
             return Center(child: Text('Error: ${snapshot.error}'));
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            // Empty data state
-            return Center(child: Text('No recommendations available.'));
+          } else if (!snapshot.hasData) {
+            return Center(child: Text('No last day songs available.'));
           } else {
-            // Data state
             return ListView.builder(
-              itemCount: snapshot.data!.length,
+              itemCount: snapshot.data!.lastDaySongsList.length,
               itemBuilder: (context, index) {
-                PlaylistRecommendation recommendation = snapshot.data![index];
+                var lastDaySong = snapshot.data!.lastDaySongsList[index];
                 return RecommendedSongSlidable(
-                  rateButtonFunction: (context) async{
-                    Song s = Song(albumId: '', albumName: '', artists: [], songName: recommendation.songName, popularity: 0, );
+                  rateButtonFunction: (context) async {
+                    Song s = Song(
+                      songName: lastDaySong.songName, albumId: '', albumName: '', artists: [], popularity: 0,
+                    );
                     showDialog(
                       context: context,
                       builder: (BuildContext context) {
@@ -83,22 +74,21 @@ class _RecommendedPlaylistScreenState extends State<RecommendedPlaylistScreen>{
                     );
                   },
                   addButtonFunction: (context) async {
-                    await addToPlaylistAndShowDialog(context, recommendation.songName);
+                    await addToPlaylistAndShowDialog(context, lastDaySong.songName);
                   },
                   likeButtonFunction: (context) async {
-                    likeSong(recommendation.songName);
+                    likeSong(lastDaySong.songName);
                   },
-                  child:SongBoxWithoutIcon(
-                      songName: recommendation.songName, artistName: recommendation.artist,
+                  child: SongBoxWithoutIcon(
+                    songName: lastDaySong.songName,
+                    artistName: lastDaySong.artistName,
                   ),
                 );
-
               },
             );
           }
         },
       ),
-
     );
   }
 
@@ -201,5 +191,5 @@ class _RecommendedPlaylistScreenState extends State<RecommendedPlaylistScreen>{
       },
     );
   }
-
 }
+

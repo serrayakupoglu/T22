@@ -3,6 +3,7 @@ import 'package:untitled1/src/features/screen/forgot_pass/forgot_pass_screen_fir
 import 'package:untitled1/src/features/screen/user_profile_screen.dart';
 import 'package:untitled1/src/features/service/song_service.dart';
 import 'package:untitled1/src/features/service/storage_service.dart';
+import '../models/last_day_songs.dart';
 import '../models/playlist_recommendation_instance.dart';
 import '../models/song.dart';
 import '../models/song_input.dart';
@@ -39,5 +40,10 @@ class SongController {
   Future<List<PlaylistRecommendation>> recommendPlaylist() async {
     return await _service.recommendPlaylist();
   }
+
+  Future<LastDaySongsList> getLastDaySongs() async {
+    return await _service.getLastDaySongs();
+  }
+
 
 }
